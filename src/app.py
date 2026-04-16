@@ -3065,6 +3065,21 @@ elif page == "🔄 Reconciliation":
             key=lambda p: p.stat().st_mtime, reverse=True,
         )
 
+    # ── Filter to only srkk-microsoft-billing documents ─────────────────────
+    def _is_microsoft_billing(pdf_path: Path) -> bool:
+        ext_files = sorted(_recon_extraction_dir.glob(f"{pdf_path.stem}*.json")) if _recon_extraction_dir.exists() else []
+        if not ext_files:
+            return False
+        try:
+            data = json.loads(ext_files[0].read_text(encoding="utf-8"))
+            root_type = str(data.get("document_type", "")).lower()
+            nested_type = str(data.get("invoice", {}).get("document_type", "")).lower()
+            return "microsoft_billing" in root_type or "microsoft billing" in nested_type
+        except Exception:
+            return False
+
+    _recon_pdf_files = [p for p in _recon_pdf_files if _is_microsoft_billing(p)]
+
     if not _recon_pdf_files:
         st.info(
             "No uploaded documents found. "
