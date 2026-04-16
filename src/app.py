@@ -1245,11 +1245,11 @@ def _doc_type_label(data: dict) -> str:
         return "Hotel"
     if "travel" in dt:
         return "Travel"
-    if "srkk" in dt and "vendor" in dt:
+    if ("srkk" in dt and "vendor" in dt) or dt == "vendor invoice":
         return "SRKK-Vendor"
-    if "srkk" in dt and "purchase" in dt:
+    if ("srkk" in dt and "purchase" in dt) or dt == "purchase order":
         return "SRKK-PO"
-    if "srkk" in dt and "microsoft" in dt:
+    if ("srkk" in dt and "microsoft" in dt) or "srkk_microsoft_billing" in dt:
         return "SRKK-MS Billing"
     return "Inv"
 
@@ -1259,20 +1259,43 @@ def map_extraction_to_report_row(data: dict, index: int) -> dict:
     af = data.get("additional_fields", {}) or {}
     currency_code = str(_safe(data, "currency") or "").strip().upper()
     kwh_before, kwh_after, total_units = _parse_kwh_readings(data)
+    dt_lower = (_safe(data, "document_type") or "").lower()
 
-    invoice_no = (
-        _safe(data, "invoice_number")
-        or _safe(data, "document_number")
-        or _safe(data, "statement_number")
-        or ""
-    )
-    invoice_date = (
-        _safe(data, "invoice_date")
-        or _safe(data, "document_date")
-        or _safe(data, "statement_date")
-        or _safe(af, "Invoice Date")
-        or ""
-    )
+    # ── SRKK-specific field resolution ───────────────────────────────────
+    if "microsoft" in dt_lower or "billing" in dt_lower:
+        # MS Billing data is nested under data["invoice"]
+        inv_data     = data.get("invoice", data)
+        invoice_no   = _safe(inv_data, "billing_number") or _safe(inv_data, "invoice_number") or ""
+        invoice_date = _safe(inv_data, "document_date") or _safe(inv_data, "billing_date") or _safe(inv_data, "invoice_date") or ""
+        company_name = _safe(inv_data, "vendor_name") or _safe(inv_data, "bill_to", "name") or ""
+        total_amt    = _safe(inv_data, "grand_total") or _safe(inv_data, "total_amount") or ""
+    elif "purchase order" in dt_lower or "srkk" in dt_lower and "purchase" in dt_lower:
+        invoice_no   = _safe(data, "po_number") or ""
+        invoice_date = _safe(data, "po_date") or ""
+        company_name = _safe(data, "supplier", "name") or _safe(data, "buyer", "name") or ""
+        total_amt    = _safe(data, "total_incl_tax") or _safe(data, "total_amount") or _safe(data, "grand_total") or ""
+    elif "vendor" in dt_lower:
+        invoice_no   = _safe(data, "invoice_number") or _safe(data, "document_number") or ""
+        invoice_date = _safe(data, "invoice_date") or _safe(data, "document_date") or ""
+        company_name = _safe(data, "vendor_name") or ""
+        total_amt    = _safe(data, "total_amount_payable") or _safe(data, "grand_total") or _safe(data, "total_amount") or ""
+    else:
+        invoice_no = (
+            _safe(data, "invoice_number")
+            or _safe(data, "document_number")
+            or _safe(data, "statement_number")
+            or ""
+        )
+        invoice_date = (
+            _safe(data, "invoice_date")
+            or _safe(data, "document_date")
+            or _safe(data, "statement_date")
+            or _safe(af, "Invoice Date")
+            or ""
+        )
+        company_name = _safe(data, "vendor_name")
+        total_amt    = _safe(data, "grand_total") or _safe(data, "total_amount")
+
     account_no = (
         _safe(data, "account_number")
         or _safe(data, "customer_account")
@@ -1290,7 +1313,7 @@ def map_extraction_to_report_row(data: dict, index: int) -> dict:
     return {
         "No": index,
         "Upload Date": uploaded_at,
-        "Company Name": _safe(data, "vendor_name"),
+        "Company Name": company_name,
         "TIN No": _safe(af, "TIN No.") or _safe(af, "TIN No"),
         "Types (Inv/CN)": _doc_type_label(data),
         "Invoice No": invoice_no,
@@ -1306,10 +1329,7 @@ def map_extraction_to_report_row(data: dict, index: int) -> dict:
         "Contract No / Batch No": _safe(af, "Contract No") or _safe(af, "Batch No") or _safe(af, "Contract No / Batch No"),
         "Contract Account No": _safe(af, "Contract Account No"),
         "Description": _build_description(data),
-        "Total Amount (incl. Tax)": _format_money_with_currency(
-            _safe(data, "grand_total") or _safe(data, "total_amount"),
-            currency_code,
-        ),
+        "Total Amount (incl. Tax)": _format_money_with_currency(total_amt, currency_code),
         "Electricity Amount": _format_money_with_currency(_electricity_amount(data), currency_code),
         "LHDN UUID": _safe(af, "LHDN UUID") or _safe(af, "e-Invoice UUID"),
         "Validate On": _safe(af, "Validate On") or _safe(af, "Validated On"),
