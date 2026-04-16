@@ -1,0 +1,679 @@
+{
+  "invoice": {
+    "document_type": "SRKK - Microsoft Billing",
+    "vendor_name": "Microsoft Regional Sales Pte Ltd",
+    "vendor_address": "182 Cecil Street, #13-01, Frasers Tower, Singapore 069547, Rep. of Singapore",
+    "vendor_registration": {
+      "uen": "201906581Z",
+      "service_tax_reg_no": "19000010"
+    },
+    "billing_profile": "SRKK CONSULTING SDN. BHD.",
+    "billing_number": "G144402663",
+    "document_date": "06/03/2026",
+    "payment_terms": "Net 60 days",
+    "due_date": "05/05/2026",
+    "billing_period": {
+      "from": "01/02/2026",
+      "to": "28/02/2026"
+    },
+    "currency": "USD",
+    "currency_note": "All monetary values are in USD",
+    "sold_to": {
+      "name": "SRKK CONSULTING SDN. BHD.",
+      "address": "No.15-1 Port Tech Tower Jalan Tiara 3/KU01 Klang SELANGOR 41150 MY",
+      "registration_no": "B16-1808-31021386"
+    },
+    "bill_to": {
+      "name": "SRKK CONSULTING SDN. BHD.",
+      "address": "No.15-1, Port Tech Tower Jalan Tiara 3/KU01 Klang SELANGOR 41150 MY"
+    },
+    "billing_summary": {
+      "charges": "335,137.23",
+      "credits": "(76,326.04)",
+      "subtotal": "258,811.19",
+      "tax": "0.00",
+      "total": "258,811.19"
+    },
+    "tax_invoice": {
+      "tax_invoice_number": "G144402663",
+      "tax_invoice_date": "06/03/2026",
+      "line_items": [
+        {
+          "product": "10% Promo on Microsoft 365 E3 with 3-year Commitment",
+          "amount": "105,344.60",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Advanced Security Add-ons for Business Premium",
+          "amount": "9,600.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Az DB for PostgreSQL Flexible Server Storage",
+          "amount": "31.15",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure AI Search",
+          "amount": "191.92",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure App Service Basic Plan",
+          "amount": "85.68",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure App Service Basic Plan - Linux",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure App Service Premium v3 Plan - Linux",
+          "amount": "495.80",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure App Service Standard Plan",
+          "amount": "57.12",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure Bastion",
+          "amount": "108.52",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure Cosmos DB",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure Cosmos DB serverless",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure Custom Vision",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure Database for MySQL Flexible Server General Purpose Series Compute",
+          "amount": "832.23",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure Database for MySQL Flexible Server Storage",
+          "amount": "83.34",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure Database for PostgreSQL Flexible Server Burstable BS Series Compute",
+          "amount": "99.15",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure DNS",
+          "amount": "1.10",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure Document Intelligence",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure Kimi",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure Monitor",
+          "amount": "0.75",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure OpenAI",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure OpenAI GPT5",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Azure Speech",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Backup",
+          "amount": "2,130.49",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Bandwidth Inter-Region",
+          "amount": "1.33",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Blob Features",
+          "amount": "171.36",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Blob Storage",
+          "amount": "43.23",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Bundle & Save: Up to 25% off Microsoft 365 Business Premium and Microsoft 365 Copilot Business",
+          "amount": "3,259.40",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Container Registry",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Dataverse",
+          "amount": "51.31",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Exchange Online (Plan 1)",
+          "amount": "780.21",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Exchange Online (Plan 2)",
+          "amount": "207.36",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Exchange Online Kiosk",
+          "amount": "345.60",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Fabric Capacity",
+          "amount": "2,234.19",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Fabric Capacity Reservation",
+          "amount": "7,640.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Files",
+          "amount": "94.31",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "General Block Blob",
+          "amount": "910.83",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "General Block Blob v2 Hierarchical Namespace",
+          "amount": "0.10",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Introductory Offer: Up to 15% off Microsoft 365 Copilot Business",
+          "amount": "1,034.32",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "IP Addresses",
+          "amount": "137.63",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Key Vault",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Load Balancer",
+          "amount": "14.28",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Logic Apps",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft 365 Apps for business",
+          "amount": "2,847.08",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft 365 Business Basic",
+          "amount": "6,446.08",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft 365 Business Premium",
+          "amount": "23,292.08",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft 365 Business Standard",
+          "amount": "20,780.26",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft 365 Copilot",
+          "amount": "3,888.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft 365 F1",
+          "amount": "7,680.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft 365 F3",
+          "amount": "7,680.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Copilot Studio",
+          "amount": "0.96",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Defender CSPM",
+          "amount": "163.19",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Defender for App Service",
+          "amount": "45.62",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Defender for Business",
+          "amount": "36.36",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Defender for Endpoint P2",
+          "amount": "6,739.20",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Defender for MySQL",
+          "amount": "15.77",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Defender for Office 365 (Plan 1)",
+          "amount": "1,714.32",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Defender for Resource Manager",
+          "amount": "0.19",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Defender for Servers",
+          "amount": "202.28",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Defender for SQL",
+          "amount": "80.61",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Defender for Storage",
+          "amount": "190.78",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Defender Suite",
+          "amount": "11,520.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft Entra ID P1",
+          "amount": "4,896.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Network Watcher",
+          "amount": "1.64",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Observability",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Office LTSC Standard 2024",
+          "amount": "8,835.75",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "OneDrive for business (Plan 2)",
+          "amount": "9.60",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "OneLake",
+          "amount": "115.03",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Power BI Pro",
+          "amount": "2,956.64",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Premium SSD Managed Disks",
+          "amount": "1,951.47",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Rtn Preference: MGN",
+          "amount": "126.38",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "SQL Database General Purpose - Serverless - Compute Gen5",
+          "amount": "418.86",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "SQL Database Single Basic",
+          "amount": "11.49",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "SQL Database Single Standard",
+          "amount": "621.91",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "SQL Database Single/Elastic Pool General Purpose - Compute Gen5",
+          "amount": "1,427.82",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "SQL Database Single/Elastic Pool General Purpose - SQL License",
+          "amount": "799.40",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "SQL Database Single/Elastic Pool General Purpose - Storage",
+          "amount": "498.63",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "SQL Database Single/Elastic Pool PITR Backup Storage",
+          "amount": "59.07",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "SQL Database Standard - Storage",
+          "amount": "12.64",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "SQL Server Standard",
+          "amount": "685.41",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Standard HDD Managed Disks",
+          "amount": "253.18",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Standard Page Blob",
+          "amount": "14.44",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Standard Page Blob v2",
+          "amount": "182.35",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Standard SSD Managed Disks",
+          "amount": "441.85",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Static Web Apps",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Storage - Bandwidth",
+          "amount": "0.31",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Teams Premium",
+          "amount": "96.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Ubuntu Pro",
+          "amount": "38.83",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines Av2 Series Windows",
+          "amount": "190.20",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines Basv2 Series",
+          "amount": "97.77",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines BS Series",
+          "amount": "514.05",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines BS Series Windows",
+          "amount": "324.41",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines Dadsv5 Series",
+          "amount": "111.08",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines Dadsv5 Series Windows",
+          "amount": "252.46",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines Dsv4 Series",
+          "amount": "206.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines Dsv4 Series Windows",
+          "amount": "121.07",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines Dv3 Series",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines Dv5 Series",
+          "amount": "3.38",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines Easv5 Series Windows",
+          "amount": "1,302.30",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines Ebsv5 Series Windows",
+          "amount": "1,233.77",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Machines FSv2 Series Windows",
+          "amount": "224.24",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Virtual Network Private Link",
+          "amount": "0.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Visio Plan 2",
+          "amount": "384.65",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "VPN Gateway",
+          "amount": "488.93",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Windows 11 Pro",
+          "amount": "476.85",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Windows Server",
+          "amount": "210.19",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Windows Server Burst",
+          "amount": "54.80",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Windows Server Standard Core 2025",
+          "amount": "9,996.00",
+          "tax_line_indicator": null
+        }
+      ],
+      "total_including_vat": "269,956.94"
+    },
+    "payment_instructions": {
+      "method": "Pay by wire/ACH",
+      "bank": "Citibank",
+      "branch": "Singapore",
+      "swift_code": "CITISGSG",
+      "account_number": "0817543138",
+      "account_name": "Microsoft Regional Sales Pte Ltd"
+    },
+    "publisher_information": [
+      {
+        "publisher_name": "Keytos LLC",
+        "publisher_address": "31 Milk Street Boston MA 02110 US"
+      },
+      {
+        "publisher_name": "Nixtla",
+        "publisher_address": "1290 20TH Ave San Francisco CA 94122-1749 US"
+      }
+    ]
+  },
+  "credit_notes": [
+    {
+      "credit_note_number": "G144411368",
+      "credit_note_date": "06/08/2025",
+      "original_billing_number": "G105304230",
+      "billing_period": {
+        "from": "01/02/2026",
+        "to": "28/02/2026"
+      },
+      "reason": "Returned goods",
+      "line_items": [
+        {
+          "product": "Fabric Capacity Reservation",
+          "amount": "7,485.12",
+          "tax_line_indicator": null
+        }
+      ],
+      "total_including_vat": "7,485.12",
+      "credit_applicable_note": "The credit of 7,485.12 USD can be applied towards future invoices."
+    },
+    {
+      "credit_note_number": "G144411367",
+      "credit_note_date": "06/01/2026",
+      "original_billing_number": "G132964359",
+      "billing_period": {
+        "from": "01/02/2026",
+        "to": "28/02/2026"
+      },
+      "reason": "Returned goods",
+      "line_items": [
+        {
+          "product": "Introductory Offer: Up to 15% off Microsoft 365 Copilot Business",
+          "amount": "484.14",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft 365 Business Basic",
+          "amount": "23.91",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft 365 Business Premium",
+          "amount": "1,808.58",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft 365 Business Standard",
+          "amount": "210.00",
+          "tax_line_indicator": null
+        }
+      ],
+      "total_including_vat": "2,526.63",
+      "credit_applicable_note": "The credit of 2,526.63 USD can be applied towards future invoices."
+    },
+    {
+      "credit_note_number": "G144411366",
+      "credit_note_date": "06/02/2026",
+      "original_billing_number": "G138722879",
+      "billing_period": {
+        "from": "01/02/2026",
+        "to": "28/02/2026"
+      },
+      "reason": "Returned goods",
+      "line_items": [
+        {
+          "product": "Microsoft 365 Business Premium",
+          "amount": "924.00",
+          "tax_line_indicator": null
+        },
+        {
+          "product": "Microsoft 365 Business Standard",
+          "amount": "210.00",
+          "tax_line_indicator": null
+        }
+      ],
+      "total_including_vat": "1,134.00",
+      "credit_applicable_note": "The credit of 1,134.00 USD can be applied towards future invoices."
+    }
+  ],
+  "document_type": "srkk_microsoft_billing",
+  "_uploaded_at": "2026-04-15 11:57:00"
+}
