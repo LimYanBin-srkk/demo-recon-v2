@@ -1,0 +1,63 @@
+{
+  "pages": [
+    {
+      "page_number": 1,
+      "file_name": "Nando's Chickenland Malaysia_page_1.png",
+      "sections": [
+        {
+          "type": "header",
+          "content": "SRKK\n\nSRKK Consulting Sdn Bhd\n(199901007821)\nNo. 15-1, Level 15, Port Tech Tower,\nJalan Tiara 3/KU01, Bandar Baru Klang,\nKlang, 41150\nSST No : B16-1808-31021386\n\nPURCHASE ORDER\nS1-714663\nPage 1 / 1\nDate : 18/03/26",
+          "confidence": 0.99
+        },
+        {
+          "type": "address",
+          "content": "Order From :\nMicrosoft Regional Sales Corporation\n, 119968\nSingapore\n\nDeliver To :\n(--- 03-78487488)\nNANDO'S CHICKENLAND MALAYSIA SDN BHD\nR-03A & R-03C, 3rd Floor, Citta Mall, No. 1, Jalan PJU 1A/48,\nPetaling Jaya, Selangor 47301\nMalaysia",
+          "confidence": 0.99
+        },
+        {
+          "type": "key_value",
+          "content": "Tel : +65 6370 9000\nFax :\nAttn :\nRef : Monthly subscription",
+          "confidence": 0.99
+        },
+        {
+          "type": "paragraph",
+          "content": "Subject : Nandos Azure Monthly Billing MY for February 2026",
+          "confidence": 1.0
+        },
+        {
+          "type": "table_header",
+          "content": "No. | Order Number | Description | Quantity | Unit Price | Amount",
+          "confidence": 1.0
+        },
+        {
+          "type": "table_row",
+          "content": "1 | S1-215734 | ROL-AZURE-RW\nMS Azure Renewal\nMicrosoft Azure Cloud Services for February 2026 | 1 MONTH | 13,066.93 | 13,066.93",
+          "confidence": 0.98
+        },
+        {
+          "type": "subtotal",
+          "content": "Total USD Excl. Tax 13,066.93\nTax Amount 0.00\nTotal USD Incl. Tax 13,066.93",
+          "confidence": 0.99
+        },
+        {
+          "type": "paragraph",
+          "content": "For enquiry relating to payment, please contact our Finance personnel:\nPurchase Order Enquiry Tel : +60-3-30021699 Ext 801/805/806\nPurchase Order Enquiry Fax : +60-3-20502670\nPlease advise immediately if the delivery schedule cannot be fulfilled.\nThank you.\n\nThis is computer-generated document therefore no signature is required.",
+          "confidence": 0.99
+        },
+        {
+          "type": "footer",
+          "content": "+60 (3) 3000 6698    sales@srkk.com    www.srkk.com",
+          "confidence": 0.98
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "total_pages": 1,
+    "languages_detected": [
+      "en"
+    ],
+    "image_quality": "clear"
+  },
+  "_document_type": "srkk_purchase_order"
+}

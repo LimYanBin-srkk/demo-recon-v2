@@ -2,82 +2,82 @@
   "pages": [
     {
       "page_number": 1,
-      "file_name": "Microsoft_Billing_2_page_1.png",
+      "file_name": "Microsoft_Billing_page_1.png",
       "sections": [
         {
           "type": "header",
           "content": "Microsoft\nBilling Summary",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
-          "type": "address",
+          "type": "paragraph",
           "content": "Microsoft Regional Sales Pte Ltd (UEN: 201906581Z),\n182 Cecil Street,\n#13-01, Frasers Tower,\nSingapore 069547, Rep. of Singapore\nService Tax Registration No.: 19000010",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "address",
           "content": "Sold To\nSRKK CONSULTING SDN. BHD.\nNo.15-1 Port Tech Tower\nJalan Tiara 3/KU01\nKlang\nSELANGOR\n41150\nMY\nReg. No.: B16-1808-31021386",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "address",
           "content": "Bill To\nSRKK CONSULTING SDN. BHD.\nNo.15-1, Port Tech Tower\nJalan Tiara 3/KU01\nKlang\nSELANGOR\n41150\nMY",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "key_value",
-          "content": "Summary\nBilling Profile : SRKK CONSULTING SDN. BHD.\nBilling Number : G144402663\nDocument Date : 06/03/2026\nPayment Terms : Net 60 days",
-          "confidence": 0.98
+          "content": "Summary\nBilling Profile SRKK CONSULTING SDN. BHD.\nBilling Number G144402663\nDocument Date 06/03/2026\nPayment Terms Net 60 days",
+          "confidence": 1.0
         },
         {
-          "type": "key_value",
-          "content": "Total Amount\nDue on 05/05/2026\nUSD 258,811.19",
-          "confidence": 0.99
+          "type": "subtotal",
+          "content": "Total Amount USD 258,811.19\nDue on 05/05/2026",
+          "confidence": 1.0
         },
         {
           "type": "paragraph",
           "content": "Questions on your bill? Visit https://aka.ms/invoice-billing",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "paragraph",
           "content": "This summary is for the billing period 01/02/2026 - 28/02/2026\nThis bill contains the charges for your purchases and services consumed from Microsoft.",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "table_header",
-          "content": "Billing Summary",
-          "confidence": 0.98
+          "content": "Billing Summary |  | ",
+          "confidence": 0.78
         },
         {
           "type": "table_row",
-          "content": "Charges | 335,137.23",
-          "confidence": 0.99
+          "content": "Charges | 335,137.23 | ",
+          "confidence": 1.0
         },
         {
           "type": "table_row",
-          "content": "Credits | (76,326.04)",
-          "confidence": 0.99
+          "content": "Credits | (76,326.04) | ",
+          "confidence": 1.0
         },
         {
           "type": "table_row",
-          "content": "Subtotal | 258,811.19",
-          "confidence": 0.99
+          "content": "Subtotal | 258,811.19 | ",
+          "confidence": 1.0
         },
         {
           "type": "table_row",
-          "content": "Tax | 0.00",
-          "confidence": 0.99
+          "content": "Tax | 0.00 | ",
+          "confidence": 1.0
         },
         {
           "type": "subtotal",
-          "content": "Total | USD 258,811.19",
-          "confidence": 0.99
+          "content": "Total USD 258,811.19",
+          "confidence": 1.0
         },
         {
           "type": "paragraph",
           "content": "Payment Instructions:\n\nPlease pay USD 258,811.19 on or before 05/05/2026 and Billing Number G144402663. The following methods of payment are accepted:\nPay by wire/ACH\nBank: Citibank\nBranch: Singapore\nSWIFT Code: CITISGSG\nAccount #: 0817543138\nAccount Name: Microsoft Regional Sales Pte Ltd",
-          "confidence": 0.97
+          "confidence": 1.0
         },
         {
           "type": "footer",
@@ -88,92 +88,92 @@
     },
     {
       "page_number": 2,
-      "file_name": "Microsoft_Billing_2_page_2.png",
+      "file_name": "Microsoft_Billing_page_2.png",
       "sections": [
         {
           "type": "header",
           "content": "Microsoft\nInvoice",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
-          "type": "address",
+          "type": "paragraph",
           "content": "Microsoft Regional Sales Pte Ltd (UEN: 201906581Z),\n182 Cecil Street,\n#13-01, Frasers Tower,\nSingapore 069547, Rep. of Singapore\nService Tax Registration No.: 19000010",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "address",
           "content": "Sold To\nSRKK CONSULTING SDN. BHD.\nNo.15-1 Port Tech Tower\nJalan Tiara 3/KU01\nKlang\nSELANGOR\n41150\nMY\nReg. No.: B16-1808-31021386",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "address",
           "content": "Bill To\nSRKK CONSULTING SDN. BHD.\nNo.15-1, Port Tech Tower\nJalan Tiara 3/KU01\nKlang\nSELANGOR\n41150\nMY",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "key_value",
-          "content": "Billing Profile : SRKK CONSULTING SDN. BHD.\nTax Invoice Number : G144402663\nTax Invoice Date : 06/03/2026\nPayment Terms : Net 60 days",
-          "confidence": 0.98
+          "content": "Billing Profile SRKK CONSULTING SDN. BHD.\nTax Invoice Number G144402663\nTax Invoice Date 06/03/2026\nPayment Terms Net 60 days",
+          "confidence": 1.0
         },
         {
           "type": "paragraph",
           "content": "This invoice is for the billing period 01/02/2026 - 28/02/2026",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "table_header",
-          "content": "Billing Details By Product\nPurchases | Total (USD) | Tax Line Indicator",
-          "confidence": 0.95
+          "content": "Purchases | Total (USD) | Tax Line Indicator",
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "10% Promo on Microsoft 365 E3 with 3-year Commitment | 105,344.60 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Advanced Security Add-ons for Business Premium | 9,600.00 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Az DB for PostgreSQL Flexible Server Storage | 31.15 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure AI Search | 191.92 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure App Service Basic Plan | 85.68 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure App Service Basic Plan - Linux | 0.00 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure App Service Premium v3 Plan - Linux | 495.80 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure App Service Standard Plan | 57.12 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure Bastion | 108.52 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure Cosmos DB | 0.00 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "footer",
@@ -184,107 +184,107 @@
     },
     {
       "page_number": 3,
-      "file_name": "Microsoft_Billing_2_page_3.png",
+      "file_name": "Microsoft_Billing_page_3.png",
       "sections": [
         {
           "type": "table_row",
           "content": "Azure Cosmos DB serverless | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure Custom Vision | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure Database for MySQL Flexible Server General Purpose Series Compute | 832.23",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure Database for MySQL Flexible Server Storage | 83.34",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure Database for PostgreSQL Flexible Server Burstable BS Series Compute | 99.15",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure DNS | 1.10",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure Document Intelligence | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure Kimi | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure Monitor | 0.75",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure OpenAI | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure OpenAI GPT5 | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Azure Speech | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Backup | 2,130.49",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Bandwidth Inter-Region | 1.33",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Blob Features | 171.36",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Blob Storage | 43.23",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Bundle & Save: Up to 25% off Microsoft 365 Business Premium and Microsoft 365 Copilot Business | 3,259.40",
-          "confidence": 0.97
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Container Registry | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Dataverse | 51.31",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Exchange Online (Plan 1) | 780.21",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "footer",
@@ -295,107 +295,107 @@
     },
     {
       "page_number": 4,
-      "file_name": "Microsoft_Billing_2_page_4.png",
+      "file_name": "Microsoft_Billing_page_4.png",
       "sections": [
         {
           "type": "table_row",
           "content": "Exchange Online (Plan 2) | 207.36",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Exchange Online Kiosk | 345.60",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Fabric Capacity | 2,234.19",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Fabric Capacity Reservation | 7,640.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Files | 94.31",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "General Block Blob | 910.83",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "General Block Blob v2 Hierarchical Namespace | 0.10",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Introductory Offer: Up to 15% off Microsoft 365 Copilot Business | 1,034.32",
-          "confidence": 0.97
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "IP Addresses | 137.63",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Key Vault | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Load Balancer | 14.28",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Logic Apps | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 Apps for business | 2,847.08",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 Business Basic | 6,446.08",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 Business Premium | 23,292.08",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 Business Standard | 20,780.26",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 Copilot | 3,888.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 F1 | 7,680.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 F3 | 7,680.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Copilot Studio | 0.96",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "footer",
@@ -406,107 +406,107 @@
     },
     {
       "page_number": 5,
-      "file_name": "Microsoft_Billing_2_page_5.png",
+      "file_name": "Microsoft_Billing_page_5.png",
       "sections": [
         {
           "type": "table_row",
           "content": "Microsoft Defender CSPM | 163.19",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Defender for App Service | 45.62",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Defender for Business | 36.36",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Defender for Endpoint P2 | 6,739.20",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Defender for MySQL | 15.77",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Defender for Office 365 (Plan 1) | 1,714.32",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Defender for Resource Manager | 0.19",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Defender for Servers | 202.28",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Defender for SQL | 80.61",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Defender for Storage | 190.78",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Defender Suite | 11,520.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft Entra ID P1 | 4,896.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Network Watcher | 1.64",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Observability | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Office LTSC Standard 2024 | 8,835.75",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "OneDrive for business (Plan 2) | 9.60",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "OneLake | 115.03",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Power BI Pro | 2,956.64",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Premium SSD Managed Disks | 1,951.47",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Rtn Preference: MGN | 126.38",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "footer",
@@ -517,107 +517,107 @@
     },
     {
       "page_number": 6,
-      "file_name": "Microsoft_Billing_2_page_6.png",
+      "file_name": "Microsoft_Billing_page_6.png",
       "sections": [
         {
           "type": "table_row",
           "content": "SQL Database General Purpose - Serverless - Compute Gen5 | 418.86",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "SQL Database Single Basic | 11.49",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "SQL Database Single Standard | 621.91",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "SQL Database Single/Elastic Pool General Purpose - Compute Gen5 | 1,427.82",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "SQL Database Single/Elastic Pool General Purpose - SQL License | 799.40",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "SQL Database Single/Elastic Pool General Purpose - Storage | 498.63",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "SQL Database Single/Elastic Pool PITR Backup Storage | 59.07",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "SQL Database Standard - Storage | 12.64",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "SQL Server Standard | 685.41",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Standard HDD Managed Disks | 253.18",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Standard Page Blob | 14.44",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Standard Page Blob v2 | 182.35",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Standard SSD Managed Disks | 441.85",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Static Web Apps | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Storage - Bandwidth | 0.31",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Teams Premium | 96.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Ubuntu Pro | 38.83",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines Av2 Series Windows | 190.20",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines Basv2 Series | 97.77",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines BS Series | 514.05",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "footer",
@@ -628,107 +628,107 @@
     },
     {
       "page_number": 7,
-      "file_name": "Microsoft_Billing_2_page_7.png",
+      "file_name": "Microsoft_Billing_page_7.png",
       "sections": [
         {
           "type": "table_row",
           "content": "Virtual Machines BS Series Windows | 324.41",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines Dadsv5 Series | 111.08",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines Dadsv5 Series Windows | 252.46",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines Dsv4 Series | 206.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines Dsv4 Series Windows | 121.07",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines Dv3 Series | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines Dv5 Series | 3.38",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines Easv5 Series Windows | 1,302.30",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines Ebsv5 Series Windows | 1,233.77",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Machines FSv2 Series Windows | 224.24",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Virtual Network Private Link | 0.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Visio Plan 2 | 384.65",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "VPN Gateway | 488.93",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Windows 11 Pro | 476.85",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Windows Server | 210.19",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Windows Server Burst | 54.80",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Windows Server Standard Core 2025 | 9,996.00",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_header",
           "content": "Tax Description | Tax Amount (USD) | Tax Line Indicator",
-          "confidence": 0.95
+          "confidence": 1.0
         },
         {
           "type": "subtotal",
-          "content": "Total (including VAT) |  | USD 269,956.94",
-          "confidence": 0.96
+          "content": "Total (including VAT) | USD 269,956.94",
+          "confidence": 1.0
         },
         {
           "type": "paragraph",
           "content": "For additional billing detail view your reconciliation files on the Partner Center billing page.",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "footer",
@@ -739,57 +739,82 @@
     },
     {
       "page_number": 8,
-      "file_name": "Microsoft_Billing_2_page_8.png",
+      "file_name": "Microsoft_Billing_page_8.png",
       "sections": [
         {
           "type": "header",
-          "content": "Microsoft\nCredit Note",
-          "confidence": 0.99
+          "content": "Microsoft\n\nCredit Note",
+          "confidence": 1.0
         },
         {
-          "type": "address",
+          "type": "paragraph",
           "content": "Microsoft Regional Sales Pte Ltd (UEN: 201906581Z),\n182 Cecil Street,\n#13-01, Frasers Tower,\nSingapore 069547, Rep. of Singapore\nService Tax Registration No.: 19000010",
-          "confidence": 0.99
+          "confidence": 1.0
+        },
+        {
+          "type": "key_value",
+          "content": "Billing Profile  SRKK CONSULTING SDN. BHD.",
+          "confidence": 1.0
+        },
+        {
+          "type": "key_value",
+          "content": "Credit Note Number  G14411368",
+          "confidence": 1.0
+        },
+        {
+          "type": "key_value",
+          "content": "Credit Note Date  06/08/2025",
+          "confidence": 1.0
+        },
+        {
+          "type": "key_value",
+          "content": "Original Billing Number  G105304230",
+          "confidence": 1.0
         },
         {
           "type": "address",
           "content": "Sold To\nSRKK CONSULTING SDN. BHD.\nNo.15-1 Port Tech Tower\nJalan Tiara 3/KU01\nKlang\nSELANGOR\n41150\nMY\nReg. No.: B16-1808-31021386",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "address",
           "content": "Bill To\nSRKK CONSULTING SDN. BHD.\nNo.15-1, Port Tech Tower\nJalan Tiara 3/KU01\nKlang\nSELANGOR\n41150\nMY",
-          "confidence": 0.99
-        },
-        {
-          "type": "key_value",
-          "content": "Billing Profile : SRKK CONSULTING SDN. BHD.\nCredit Note Number : G144411368\nCredit Note Date : 06/08/2025\nOriginal Billing Number : G105304230",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "paragraph",
           "content": "This credit note is for the billing period 01/02/2026 - 28/02/2026",
-          "confidence": 0.99
+          "confidence": 1.0
+        },
+        {
+          "type": "header",
+          "content": "Credit Details By Product",
+          "confidence": 1.0
         },
         {
           "type": "table_header",
-          "content": "Credit Details By Product\nPurchases | Total (USD)",
-          "confidence": 0.95
+          "content": "Purchases | Total (USD)",
+          "confidence": 0.98
         },
         {
           "type": "table_row",
           "content": "Fabric Capacity Reservation | 7,485.12",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "subtotal",
-          "content": "Total (including VAT) | USD 7,485.12",
-          "confidence": 0.98
+          "content": "Total (including VAT)  USD 7,485.12",
+          "confidence": 1.0
         },
         {
           "type": "paragraph",
-          "content": "For additional billing detail view your reconciliation files on the Partner Center billing page.\nThe credit of 7,485.12 USD can be applied towards future invoices.\nReason: Returned goods",
-          "confidence": 0.97
+          "content": "For additional billing detail view your reconciliation files on the Partner Center billing page.",
+          "confidence": 1.0
+        },
+        {
+          "type": "paragraph",
+          "content": "The credit of 7,485.12 USD can be applied towards future invoices.\nReason: Returned goods",
+          "confidence": 1.0
         },
         {
           "type": "footer",
@@ -800,7 +825,7 @@
     },
     {
       "page_number": 9,
-      "file_name": "Microsoft_Billing_2_page_9.png",
+      "file_name": "Microsoft_Billing_page_9.png",
       "sections": [
         {
           "type": "header",
@@ -808,24 +833,39 @@
           "confidence": 0.99
         },
         {
-          "type": "address",
+          "type": "paragraph",
           "content": "Microsoft Regional Sales Pte Ltd (UEN: 201906581Z),\n182 Cecil Street,\n#13-01, Frasers Tower,\nSingapore 069547, Rep. of Singapore\nService Tax Registration No.: 19000010",
+          "confidence": 0.98
+        },
+        {
+          "type": "key_value",
+          "content": "Billing Profile : SRKK CONSULTING SDN. BHD.",
+          "confidence": 0.98
+        },
+        {
+          "type": "key_value",
+          "content": "Credit Note Number : G144411367",
+          "confidence": 0.99
+        },
+        {
+          "type": "key_value",
+          "content": "Credit Note Date : 06/01/2026",
+          "confidence": 0.99
+        },
+        {
+          "type": "key_value",
+          "content": "Original Billing Number : G132964359",
           "confidence": 0.99
         },
         {
           "type": "address",
           "content": "Sold To\nSRKK CONSULTING SDN. BHD.\nNo.15-1 Port Tech Tower\nJalan Tiara 3/KU01\nKlang\nSELANGOR\n41150\nMY\nReg. No.: B16-1808-31021386",
-          "confidence": 0.99
+          "confidence": 0.97
         },
         {
           "type": "address",
           "content": "Bill To\nSRKK CONSULTING SDN. BHD.\nNo.15-1, Port Tech Tower\nJalan Tiara 3/KU01\nKlang\nSELANGOR\n41150\nMY",
-          "confidence": 0.99
-        },
-        {
-          "type": "key_value",
-          "content": "Billing Profile : SRKK CONSULTING SDN. BHD.\nCredit Note Number : G144411367\nCredit Note Date : 06/01/2026\nOriginal Billing Number : G132964359",
-          "confidence": 0.98
+          "confidence": 0.97
         },
         {
           "type": "paragraph",
@@ -833,29 +873,34 @@
           "confidence": 0.99
         },
         {
+          "type": "header",
+          "content": "Credit Details By Product",
+          "confidence": 0.99
+        },
+        {
           "type": "table_header",
-          "content": "Credit Details By Product\nPurchases | Total (USD) | Tax Line Indicator",
-          "confidence": 0.95
+          "content": "Purchases | Total (USD) | Tax Line Indicator",
+          "confidence": 0.96
         },
         {
           "type": "table_row",
           "content": "Introductory Offer: Up to 15% off Microsoft 365 Copilot Business | 484.14 | ",
-          "confidence": 0.97
+          "confidence": 0.96
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 Business Basic | 23.91 | ",
-          "confidence": 0.98
+          "confidence": 0.96
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 Business Premium | 1,808.58 | ",
-          "confidence": 0.98
+          "confidence": 0.97
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 Business Standard | 210.00 | ",
-          "confidence": 0.98
+          "confidence": 0.97
         },
         {
           "type": "table_header",
@@ -865,83 +910,113 @@
         {
           "type": "subtotal",
           "content": "Total (including VAT) |  | USD 2,526.63",
-          "confidence": 0.97
+          "confidence": 0.96
         },
         {
           "type": "paragraph",
-          "content": "For additional billing detail view your reconciliation files on the Partner Center billing page.\nThe credit of 2,526.63 USD can be applied towards future invoices.\nReason: Returned goods",
-          "confidence": 0.97
+          "content": "For additional billing detail view your reconciliation files on the Partner Center billing page.",
+          "confidence": 0.98
+        },
+        {
+          "type": "paragraph",
+          "content": "The credit of 2,526.63 USD can be applied towards future invoices.\nReason: Returned goods",
+          "confidence": 0.98
         },
         {
           "type": "footer",
           "content": "9/11",
-          "confidence": 1.0
+          "confidence": 0.99
         }
       ]
     },
     {
       "page_number": 10,
-      "file_name": "Microsoft_Billing_2_page_10.png",
+      "file_name": "Microsoft_Billing_page_10.png",
       "sections": [
         {
           "type": "header",
-          "content": "Microsoft\nCredit Note",
-          "confidence": 0.99
+          "content": "Microsoft\n\nCredit Note",
+          "confidence": 1.0
         },
         {
-          "type": "address",
+          "type": "paragraph",
           "content": "Microsoft Regional Sales Pte Ltd (UEN: 201906581Z),\n182 Cecil Street,\n#13-01, Frasers Tower,\nSingapore 069547, Rep. of Singapore\nService Tax Registration No.: 19000010",
-          "confidence": 0.99
+          "confidence": 1.0
+        },
+        {
+          "type": "key_value",
+          "content": "Billing Profile SRKK CONSULTING SDN. BHD.",
+          "confidence": 1.0
+        },
+        {
+          "type": "key_value",
+          "content": "Credit Note Number G14411366",
+          "confidence": 1.0
+        },
+        {
+          "type": "key_value",
+          "content": "Credit Note Date 06/02/2026",
+          "confidence": 1.0
+        },
+        {
+          "type": "key_value",
+          "content": "Original Billing Number G138722879",
+          "confidence": 1.0
         },
         {
           "type": "address",
           "content": "Sold To\nSRKK CONSULTING SDN. BHD.\nNo.15-1 Port Tech Tower\nJalan Tiara 3/KU01\nKlang\nSELANGOR\n41150\nMY\nReg. No.: B16-1808-31021386",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "address",
           "content": "Bill To\nSRKK CONSULTING SDN. BHD.\nNo.15-1, Port Tech Tower\nJalan Tiara 3/KU01\nKlang\nSELANGOR\n41150\nMY",
-          "confidence": 0.99
-        },
-        {
-          "type": "key_value",
-          "content": "Billing Profile : SRKK CONSULTING SDN. BHD.\nCredit Note Number : G144411366\nCredit Note Date : 06/02/2026\nOriginal Billing Number : G138722879",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "paragraph",
           "content": "This credit note is for the billing period 01/02/2026 - 28/02/2026",
-          "confidence": 0.99
+          "confidence": 1.0
+        },
+        {
+          "type": "header",
+          "content": "Credit Details By Product",
+          "confidence": 1.0
         },
         {
           "type": "table_header",
-          "content": "Credit Details By Product\nPurchases | Total (USD) | Tax Line Indicator",
-          "confidence": 0.95
+          "content": "Purchases | Total (USD) | Tax Line Indicator",
+          "confidence": 0.98
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 Business Premium | 924.00 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Microsoft 365 Business Standard | 210.00 | ",
-          "confidence": 0.98
+          "confidence": 1.0
         },
         {
           "type": "table_header",
           "content": "Tax Description | Tax Amount (USD) | Tax Line Indicator",
-          "confidence": 0.95
+          "confidence": 1.0
         },
         {
           "type": "subtotal",
-          "content": "Total (including VAT) |  | USD 1,134.00",
-          "confidence": 0.97
+          "content": "Total (including VAT) USD 1,134.00",
+          "confidence": 1.0
         },
         {
           "type": "paragraph",
-          "content": "For additional billing detail view your reconciliation files on the Partner Center billing page.\nThe credit of 1,134.00 USD can be applied towards future invoices.\nReason: Returned goods",
-          "confidence": 0.97
+          "content": "For additional billing detail view your reconciliation files on the Partner Center billing page.",
+          "confidence": 1.0
+        },
+        {
+          "type": "paragraph",
+          "content": "The credit of 1,134.00 USD can be applied towards future invoices.\nReason: Returned goods",
+          "confidence": 1.0
         },
         {
           "type": "footer",
@@ -952,32 +1027,47 @@
     },
     {
       "page_number": 11,
-      "file_name": "Microsoft_Billing_2_page_11.png",
+      "file_name": "Microsoft_Billing_page_11.png",
       "sections": [
         {
           "type": "header",
           "content": "Microsoft",
-          "confidence": 0.99
+          "confidence": 1.0
+        },
+        {
+          "type": "header",
+          "content": "Payment Instructions:",
+          "confidence": 1.0
         },
         {
           "type": "paragraph",
-          "content": "Payment Instructions:\n\nPlease pay USD 258,811.19 on or before 05/05/2026 and Billing Number G144402663. The following methods of payment are accepted:\nPay by wire/ACH\nBank: Citibank\nBranch: Singapore\nSWIFT Code: CITISGSG\nAccount #: 0817543138\nAccount Name: Microsoft Regional Sales Pte Ltd",
-          "confidence": 0.97
+          "content": "Please pay USD 258,811.19 on or before 05/05/2026 and Billing Number G144402663. The following methods of payment are accepted:",
+          "confidence": 1.0
+        },
+        {
+          "type": "paragraph",
+          "content": "Pay by wire/ACH\nBank: Citibank\nBranch: Singapore\nSWIFT Code: CITISGSG\nAccount #: 0817543138\nAccount Name: Microsoft Regional Sales Pte Ltd",
+          "confidence": 1.0
+        },
+        {
+          "type": "header",
+          "content": "Publisher information",
+          "confidence": 1.0
         },
         {
           "type": "table_header",
-          "content": "Publisher information\nPublisher name | Publisher address",
-          "confidence": 0.95
+          "content": "Publisher name | Publisher address",
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Keytos LLC | 31 Milk Street Boston\nMA 02110 US",
-          "confidence": 0.96
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "Nixtla | 1290 20TH Ave San\nFrancisco CA 94122-\n1749 US",
-          "confidence": 0.96
+          "confidence": 1.0
         },
         {
           "type": "footer",
@@ -993,5 +1083,6 @@
       "en"
     ],
     "image_quality": "clear"
-  }
+  },
+  "_document_type": "srkk_microsoft_billing"
 }

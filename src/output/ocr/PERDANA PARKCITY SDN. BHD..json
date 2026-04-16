@@ -7,12 +7,12 @@
         {
           "type": "header",
           "content": "SRKK\n\nSRKK Consulting Sdn Bhd\n(199901007821)\nNo. 15-1, Level 15, Port Tech Tower,\nJalan Tiara 3/KU01, Bandar Baru Klang,\nKlang, 41150\nSST No : B16-1808-31021386\n\nPURCHASE ORDER\nS1-714303\nPage 1 / 2\nDate : 13/02/26",
-          "confidence": 0.98
+          "confidence": 0.99
         },
         {
           "type": "address",
           "content": "Order From :\nMicrosoft Regional Sales Corporation\n, 119968\nSingapore",
-          "confidence": 0.96
+          "confidence": 0.98
         },
         {
           "type": "address",
@@ -22,42 +22,42 @@
         {
           "type": "key_value",
           "content": "Tel : +65 6370 9000\nFax :\nAttn :\nRef :\nSubject :",
-          "confidence": 0.95
+          "confidence": 0.96
         },
         {
           "type": "table_header",
           "content": "No. | Order Number | Description | Quantity | Unit Price | Amount",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "1 | S1-215109 | ROL-M365-RW\nMicrosoft 365 Plans Renewal\nCFQ7TTC0LH18\nMicrosoft 365 Business Basic\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027 | 85 UNIT | 28.80 | 2,448.00",
-          "confidence": 0.96
+          "confidence": 0.95
         },
         {
           "type": "table_row",
           "content": "2 | S1-215109 | ROL-M365-NN\nMS Office 365\nCFQ7TTC0LFLX\nMicrosoft 365 E3 - 3 year (Promo price)\nP3Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027 | 100 UNIT | 311.04 | 31,104.00",
-          "confidence": 0.96
+          "confidence": 0.95
         },
         {
           "type": "table_row",
           "content": "3 | S1-215109 | ROL-M365-NN\nMS Office 365\nCFQ7TTC0LCHC\nMicrosoft 365 Business Premium\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027 | 100 UNIT | 211.20 | 21,120.00",
-          "confidence": 0.96
+          "confidence": 0.95
         },
         {
           "type": "table_row",
           "content": "4 | S1-215109 | ROL-M365-NN\nMS Office 365\nCFQ7TTC0LH05 Microsoft 365 F3\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027 | 100 UNIT | 76.80 | 7,680.00",
-          "confidence": 0.95
+          "confidence": 0.94
         },
         {
           "type": "table_row",
           "content": "5 | S1-215109 | ROL-M365-RW\nMicrosoft 365 Plans Renewal\nCFQ7TTC0LH04\nMicrosoft Defender for Office 365 (Plan 1)\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027\n*Add On for Business Basic | 85 UNIT | 19.20 | 1,632.00",
-          "confidence": 0.95
+          "confidence": 0.94
         },
         {
           "type": "footer",
           "content": "+60 (3) 3000 6698    sales@srkk.com    www.srkk.com",
-          "confidence": 0.93
+          "confidence": 0.99
         }
       ]
     },
@@ -68,47 +68,47 @@
         {
           "type": "header",
           "content": "SRKK\n\nSRKK Consulting Sdn Bhd\n(199901007821)\nNo. 15-1, Level 15, Port Tech Tower,\nJalan Tiara 3/KU01, Bandar Baru Klang,\nKlang, 41150\nSST No : B16-1808-31021386\n\nPURCHASE ORDER\nS1-714303\nPage 2 / 2\nDate : 13/02/26",
-          "confidence": 0.98
+          "confidence": 0.99
         },
         {
           "type": "table_header",
           "content": "No. | Order Number | Description | Quantity | Unit Price | Amount",
-          "confidence": 0.99
+          "confidence": 1.0
         },
         {
           "type": "table_row",
           "content": "6 | S1-215109 | ROL-M365-NN\nMS Office 365\nCFQ7TTC0LHQB\nMicrosoft Defender Suite\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027\n*Add On for ME3 | 100 UNIT | 115.20 | 11,520.00",
-          "confidence": 0.95
+          "confidence": 0.94
         },
         {
           "type": "table_row",
-          "content": "7 | S1-215109 | ROL-M365-NN\nMS Office 365\nCFQ7TTC10RSN\nMicrosoft Defender Suite for Microsoft 365 Business\nPremium\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027\n*Add On for Business Premium | 100 UNIT | 96.00 | 9,600.00",
+          "content": "7 | S1-215109 | ROL-M365-NN\nMS Office 365\nCFQ7TTC1ORSN\nMicrosoft Defender Suite for Microsoft 365 Business\nPremium\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027\n*Add On for Business Premium | 100 UNIT | 96.00 | 9,600.00",
           "confidence": 0.93
         },
         {
           "type": "table_row",
-          "content": "8 | S1-215109 | ROL-M365-NN\nMS Office 365\nCFQ7TTC0MBMD\nMicrosoft Defender Suite Add-on FLW\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027\n*Add On for MF3 | 100 UNIT | 76.80 | 7,680.00",
-          "confidence": 0.95
+          "content": "8 | S1-215109 | ROL-M365-NN\nMS Office 365\nCFQ7TTC0TMBD\nMicrosoft Defender Suite Add-on FLW\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027\n*Add On for MF3 | 100 UNIT | 76.80 | 7,680.00",
+          "confidence": 0.94
         },
         {
           "type": "table_row",
           "content": "9 | S1-215109 | ROL-M365-NN\nMS Office 365\nCFQ7TTC0LFLS\nMicrosoft Entra ID P1\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027 | 85 UNIT | 57.60 | 4,896.00",
-          "confidence": 0.96
+          "confidence": 0.95
         },
         {
           "type": "subtotal",
           "content": "Total USD Excl. Tax 97,680.00\nTax Amount 0.00\nTotal USD Incl. Tax 97,680.00",
-          "confidence": 0.94
+          "confidence": 0.98
         },
         {
           "type": "paragraph",
           "content": "For enquiry relating to payment, please contact our Finance personnel:\nPurchase Order Enquiry Tel : +60-3-30021699 Ext 801/805/806\nPurchase Order Enquiry Fax : +60-3-20502670\nPlease advise immediately if the delivery schedule cannot be fulfilled.\nThank you.\n\nThis is computer-generated document therefore no signature is required.",
-          "confidence": 0.95
+          "confidence": 0.97
         },
         {
           "type": "footer",
           "content": "+60 (3) 3000 6698    sales@srkk.com    www.srkk.com",
-          "confidence": 0.93
+          "confidence": 0.99
         }
       ]
     }

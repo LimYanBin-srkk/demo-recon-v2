@@ -1,0 +1,55 @@
+{
+  "document_type": "Purchase Order",
+  "po_number": "S1-714663",
+  "po_date": "18/03/26",
+  "page_info": "Page 1 / 1",
+  "subject": "Nandos Azure Monthly Billing MY for February 2026",
+  "buyer": {
+    "name": "SRKK Consulting Sdn Bhd",
+    "address": "No. 15-1, Level 15, Port Tech Tower,\nJalan Tiara 3/KU01, Bandar Baru Klang,\nKlang, 41150",
+    "company_no": "199901007821",
+    "sst_no": "B16-1808-31021386"
+  },
+  "supplier": {
+    "name": "Microsoft Regional Sales Corporation",
+    "address": ", 119968\nSingapore"
+  },
+  "delivery_recipient": {
+    "name": "NANDO'S CHICKENLAND MALAYSIA SDN BHD",
+    "address": "R-03A & R-03C, 3rd Floor, Citta Mall, No. 1, Jalan PJU 1A/48,\nPetaling Jaya, Selangor 47301\nMalaysia",
+    "contact_person": null,
+    "contact_phone": "03-78487488"
+  },
+  "contact_info": {
+    "tel": "+65 6370 9000",
+    "fax": null,
+    "attn": null,
+    "ref": "Monthly subscription"
+  },
+  "currency": "USD",
+  "currency_note": "All monetary values are in USD",
+  "line_items": [
+    {
+      "line_no": "1",
+      "order_number": "S1-215734",
+      "part_number": "ROL-AZURE-RW",
+      "description": "ROL-AZURE-RW\nMS Azure Renewal\nMicrosoft Azure Cloud Services for February 2026",
+      "quantity": "1 MONTH",
+      "unit_price": "13,066.93",
+      "amount": "13,066.93",
+      "low_confidence": false
+    }
+  ],
+  "total_excl_tax": "13,066.93",
+  "tax_amount": "0.00",
+  "tax_label": null,
+  "total_incl_tax": "13,066.93",
+  "remarks": "Please advise immediately if the delivery schedule cannot be fulfilled.\nThank you.\n\nThis is computer-generated document therefore no signature is required.",
+  "enquiry_contact": {
+    "tel": "+60-3-30021699 Ext 801/805/806",
+    "fax": "+60-3-20502670"
+  },
+  "additional_fields": {},
+  "associated_billing_type": "SRKK - Microsoft Billing",
+  "_uploaded_at": "2026-04-16 17:09:04"
+}

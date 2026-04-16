@@ -115,10 +115,15 @@ def _parse_amount(value) -> Decimal:
     if value is None:
         return Decimal("0")
     s = str(value).strip().replace(",", "").replace(" ", "")
+    if not s or s in ("-", "."):
+        return Decimal("0")
     if s.startswith("(") and s.endswith(")"):
         s = "-" + s[1:-1]
     try:
-        return Decimal(s).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        d = Decimal(s)
+        if not d.is_finite():
+            return Decimal("0")
+        return d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     except Exception:
         return Decimal("0")
 

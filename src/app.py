@@ -2,175 +2,23 @@
 SRKK Document Intelligence
 Streamlit UI for OCR, Extraction & Bank Matching Demo
 """
-
-import streamlit as st
+import io
 import json
-import sys
-import base64
+import re
 import tempfile
-import pandas as pd
-import random
-import hashlib
-import plotly.graph_objects as go
+from datetime import datetime
 from pathlib import Path
-from datetime import datetime, date, timedelta
 
-# Add src to path so we can import our modules
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
 
+from agents import maybe_parse_json as _maybe_parse_json
+from core.ocr_agent import ocr_image_with_chat_model, ocr_images_with_chat_model
+from core.orchestrator import AGENT_REGISTRY, run as orchestrator_run
 from core.pdf_to_images import pdf_to_images
-from core.ocr_agent import ocr_images_with_chat_model, ocr_image_with_chat_model, _maybe_parse_json
-from core.orchestrator import run as orchestrator_run, AGENT_REGISTRY
-from agents.classifier import classify_document
 
-# ─── Reconciliation Summary — colour palette & mock data ────────────────────
-_RC_PURPLE      = "#BFB2F9"
-_RC_PINK        = "#FD8FD5"
-_RC_RED         = "#DB3C36"
-_RC_TEAL        = "#00A0AF"
-_RC_PURPLE_DARK = "#8B7AD6"
-_RC_PINK_DARK   = "#D96FB0"
-_RC_RED_DARK    = "#A82D28"
-_RC_TEAL_DARK   = "#007A85"
-_RC_BG          = "#F8F9FC"
-_RC_CARD        = "#FFFFFF"
-_RC_TEXT        = "#1A1A2E"
-_RC_MUTED       = "#6B7280"
-_RC_BORDER      = "#E5E7EB"
-_RC_AMBER       = "#F59E0B"
-_RC_GREEN       = "#10B981"
-_RC_PLOTLY_LAYOUT = dict(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="Inter, system-ui, sans-serif", color="#1A1A2E"),
-)
-
-
-@st.cache_data
-def _generate_ocr_summary_mock() -> pd.DataFrame:
-    """Mock: monthly OCR document processing summary."""
-    rng = random.Random(7)
-    doc_types = [
-        "Commercial Invoice", "Credit Note", "Travel", "Rental",
-        "Hotel", "Utility", "SOA", "Bank Statement",
-        "SRKK - Vendor Invoice", "SRKK - Purchase Order", "SRKK - Microsoft Billing",
-    ]
-    rows = []
-    base = date(2025, 9, 1)
-    for m in range(7):
-        month_date = base + timedelta(days=m * 30)
-        month_label = month_date.strftime("%b %Y")
-        for dt in doc_types:
-            docs = rng.randint(5, 80)
-            pages = docs * rng.randint(1, 6)
-            success = rng.randint(int(docs * 0.85), docs)
-            failed = docs - success
-            rows.append({
-                "Month": month_label,
-                "Document Type": dt,
-                "Documents Processed": docs,
-                "Pages Processed": pages,
-                "Successful": success,
-                "Failed": failed,
-            })
-    return pd.DataFrame(rows)
-
-
-@st.cache_data
-def _generate_ocr_doc_type_mock() -> pd.DataFrame:
-    """Mock: average pages uploaded and average fields extracted per document type."""
-    return pd.DataFrame([
-        {"Document Type": "Commercial Invoice", "Avg Pages Uploaded": 2, "Avg Fields Extracted": 18},
-        {"Document Type": "Credit Note",        "Avg Pages Uploaded": 2, "Avg Fields Extracted": 14},
-        {"Document Type": "Travel",             "Avg Pages Uploaded": 3, "Avg Fields Extracted": 22},
-        {"Document Type": "Rental",             "Avg Pages Uploaded": 2, "Avg Fields Extracted": 16},
-        {"Document Type": "Hotel",              "Avg Pages Uploaded": 3, "Avg Fields Extracted": 20},
-        {"Document Type": "Utility",            "Avg Pages Uploaded": 2, "Avg Fields Extracted": 12},
-        {"Document Type": "SOA",                        "Avg Pages Uploaded": 5, "Avg Fields Extracted": 30},
-        {"Document Type": "Bank Statement",              "Avg Pages Uploaded": 5, "Avg Fields Extracted": 28},
-        {"Document Type": "SRKK - Vendor Invoice",       "Avg Pages Uploaded": 2, "Avg Fields Extracted": 20},
-        {"Document Type": "SRKK - Purchase Order",       "Avg Pages Uploaded": 2, "Avg Fields Extracted": 18},
-        {"Document Type": "SRKK - Microsoft Billing",    "Avg Pages Uploaded": 3, "Avg Fields Extracted": 25},
-    ])
-
-
-@st.cache_data
-def _generate_recon_mock_runs() -> pd.DataFrame:
-    """Generate realistic mock reconciliation run history for dashboard display."""
-    rng = random.Random(42)
-    runs = []
-    base_dt = date(2025, 10, 1)
-    for i in range(25):
-        run_date   = base_dt + timedelta(days=i * 7 + rng.randint(0, 3))
-        period_from = run_date - timedelta(days=7)
-        period_to   = run_date - timedelta(days=1)
-        income_rows  = rng.randint(800, 5000)
-        balance_rows = rng.randint(800, 5000)
-        sales_rows   = rng.randint(200, 1500)
-        recon_rows   = rng.randint(700, min(income_rows, balance_rows))
-        if i % 5 == 0:
-            outstanding_rows  = 0
-            refund_rows       = rng.randint(0, int(recon_rows * 0.08))
-            match_rate        = 100.0
-            total_sales       = round(rng.uniform(50_000, 500_000), 2)
-            total_fees        = round(total_sales * rng.uniform(0.03, 0.12), 2)
-            total_payment     = round(total_sales - total_fees, 2)
-            total_outstanding = 0.0
-        else:
-            outstanding_rows  = rng.randint(1, max(2, int(recon_rows * 0.15)))
-            refund_rows       = rng.randint(0, int(recon_rows * 0.08))
-            match_rate        = round((recon_rows - outstanding_rows) / recon_rows * 100, 2) if recon_rows else 0
-            total_sales       = round(rng.uniform(50_000, 500_000), 2)
-            total_fees        = round(total_sales * rng.uniform(0.03, 0.12), 2)
-            max_payment       = total_sales - total_fees
-            total_payment     = round(max_payment * rng.uniform(0.85, 0.97), 2)
-            total_outstanding = round(total_sales - total_payment - total_fees, 2)
-        income_not_balance = rng.randint(0, 30)
-        balance_not_income = rng.randint(0, 25)
-        duration           = round(rng.uniform(3.5, 45.0), 2)
-        fees_pct           = round(total_fees / total_sales * 100, 2) if total_sales else 0
-        needs_review       = outstanding_rows != 0 or total_outstanding != 0
-        review_reasons     = []
-        if outstanding_rows != 0:
-            review_reasons.append(f"Outstanding orders ({outstanding_rows})")
-        if total_outstanding != 0:
-            review_reasons.append(f"Outstanding amount (RM {total_outstanding:,.2f})")
-        run_id = hashlib.sha256(f"run-{i}-{run_date}".encode()).hexdigest()[:8].upper()
-        runs.append({
-            "Run ID": f"RUN-{run_id}", "Run Date": run_date,
-            "Period From": period_from, "Period To": period_to,
-            "Income Rows": income_rows, "Balance Rows": balance_rows,
-            "Sales Rows": sales_rows, "Recon Rows": recon_rows,
-            "Outstanding Orders": outstanding_rows, "Refund Orders": refund_rows,
-            "Match Rate (%)": match_rate,
-            "Total Sales (RM)": total_sales, "Total Payment (RM)": total_payment,
-            "Total Fees (RM)": total_fees, "Total Outstanding (RM)": total_outstanding,
-            "Income Not In Balance": income_not_balance, "Balance Not In Income": balance_not_income,
-            "Duration (s)": duration, "Fees % of Sales": fees_pct,
-            "Needs Review": needs_review,
-            "Review Reasons": "; ".join(review_reasons) if review_reasons else "—",
-            "Status": "⚠️ Needs Review" if needs_review else "✅ OK",
-        })
-    return pd.DataFrame(runs)
-
-
-def _rc_metric_card(label: str, value: str, accent: str = "#00A0AF") -> str:
-    return f"""
-    <div style="background:#fff;border-radius:12px;padding:1.25rem;border:1px solid #E5E7EB;
-                box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-        <div style="display:flex;align-items:center;">
-            <span style="width:4px;height:32px;border-radius:2px;background:{accent};
-                         display:inline-block;margin-right:0.6rem;vertical-align:middle;"></span>
-            <div>
-                <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;
-                            letter-spacing:0.5px;color:#6B7280;margin-bottom:0.35rem;">{label}</div>
-                <div style="font-size:1.75rem;font-weight:700;color:#1A1A2E;line-height:1.2;">{value}</div>
-            </div>
-        </div>
-    </div>
-    """
-
-# ─── Page Config ─────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="SRKK Document Intelligence",
     page_icon="📄",
@@ -178,408 +26,237 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ─── Custom CSS — Brand Theme ────────────────────────────────────────
-# Palette:  Emerald #065f46 · #059669 · #047857 · #6ee7b7 · #34d399
-#           Red  #EE2D25 · White #FFFFFF
-st.markdown("""
+st.markdown(
+    """
 <style>
-    /* ═══ GLOBAL FOUNDATION ═══ */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-    .block-container { padding-top: 1rem; }
-
-    /* ═══ MAIN HEADER BAR ═══ */
-    .main-header {
-        background: linear-gradient(135deg, #022c22 0%, #065f46 30%, #059669 100%);
-        padding: 1.4rem 2rem; border-radius: 12px; margin-bottom: 1.5rem; color: white;
-        border-bottom: 3px solid #34d399;
-        box-shadow: 0 4px 16px rgba(6,95,70,0.18);
+    /* ── Sidebar nav buttons: left-aligned ───── */
+    [data-testid="stSidebar"] .stButton > button {
+        justify-content: flex-start !important;
+        text-align: left !important;
+        padding-left: 12px !important;
     }
-    .main-header h1 { color: white; font-size: 1.8rem; margin: 0; font-weight: 800; letter-spacing: -0.01em; }
-    .main-header p { color: #a7f3d0; font-size: 0.95rem; margin: 0.3rem 0 0 0; }
-
-    .pipeline-step {
-        background: #ecfdf5; border-left: 4px solid #059669;
-        padding: 1rem 1.2rem; border-radius: 0 8px 8px 0; margin-bottom: 0.8rem;
+    [data-testid="stSidebar"] .stButton > button p,
+    [data-testid="stSidebar"] .stButton > button span,
+    [data-testid="stSidebar"] .stButton > button div {
+        text-align: left !important;
+        width: 100% !important;
+        display: block !important;
     }
-    .confidence-high { color: #059669; font-weight: 600; }
-    .confidence-medium { color: #d68000; font-weight: 600; }
-    .confidence-low { color: #EE2D25; font-weight: 600; }
-
-    /* ═══ SIDEBAR ═══ */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #022c22 0%, #065f46 40%, #047857 100%) !important;
+    /* Active nav button — teal accent (override Streamlit primary red) */
+    [data-testid="stSidebar"] .stButton > button[kind="primary"],
+    [data-testid="stSidebar"] .stButton > button[data-testid="baseButton-primary"] {
+        background-color: #0d9488 !important;
+        border-color: #0d9488 !important;
+        color: #ffffff !important;
+        box-shadow: none !important;
     }
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] li,
-    [data-testid="stSidebar"] .stCaption p { color: #a7f3d0 !important; }
-    [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.12) !important; }
-    /* Sidebar selectbox / radio / widget labels */
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] .stSelectbox label,
-    [data-testid="stSidebar"] .stRadio label {
-        color: #d1fae5 !important;
+    [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover,
+    [data-testid="stSidebar"] .stButton > button[data-testid="baseButton-primary"]:hover {
+        background-color: #0f766e !important;
+        border-color: #0f766e !important;
+        color: #ffffff !important;
     }
-    [data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {
-        color: #d1fae5 !important;
+    [data-testid="stSidebar"] .stButton > button[kind="primary"] p,
+    [data-testid="stSidebar"] .stButton > button[kind="primary"] span,
+    [data-testid="stSidebar"] .stButton > button[data-testid="baseButton-primary"] p,
+    [data-testid="stSidebar"] .stButton > button[data-testid="baseButton-primary"] span {
+        color: #ffffff !important;
     }
-    /* Radio button active state */
-    [data-testid="stSidebar"] .stRadio [role="radiogroup"] label[data-checked="true"] {
-        background: rgba(52,211,153,0.15) !important;
-        border-radius: 6px;
+    /* Inactive nav button */
+    [data-testid="stSidebar"] .stButton > button[data-testid="baseButton-secondary"] p,
+    [data-testid="stSidebar"] .stButton > button[data-testid="baseButton-secondary"] span {
+        color: #374151 !important;
     }
-
+    /* Sidebar logo */
     .sidebar-logo {
-        text-align: center; padding: 1.2rem 0 0.6rem 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px 8px 16px 8px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 8px;
     }
     .sidebar-logo-icon {
-        font-size: 2.4rem; display: block; margin-bottom: 0.3rem;
+        font-size: 3rem;
+        line-height: 1;
+        margin-bottom: 8px;
     }
     .sidebar-logo-text {
-        font-size: 1.2rem; font-weight: 800; color: #ffffff;
-        letter-spacing: 0.02em;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0F172A;
+        text-align: center;
+        letter-spacing: -0.01em;
     }
     .sidebar-logo-sub {
-        font-size: 0.72rem; color: #6ee7b7; letter-spacing: 0.06em;
-        text-transform: uppercase; margin-top: 2px;
+        font-size: 0.72rem;
+        color: #6B7280;
+        text-align: center;
+        margin-top: 2px;
     }
     .sidebar-section {
-        font-size: 0.68rem; font-weight: 700; color: #34d399;
-        text-transform: uppercase; letter-spacing: 0.1em;
-        padding: 0.8rem 0 0.4rem 0.5rem;
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9CA3AF;
+        padding: 12px 4px 4px 4px;
     }
     .sidebar-about-card {
-        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 10px; padding: 0.8rem 1rem; margin-top: 0.3rem;
-    }
-    .sidebar-about-title {
-        font-size: 0.7rem; font-weight: 600; color: #6ee7b7;
-        text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem;
+        background: #F9FAFB;
+        border-radius: 8px;
+        padding: 10px 10px;
+        margin-top: 4px;
     }
     .sidebar-about-item {
-        display: flex; align-items: flex-start; gap: 0.5rem;
-        padding: 0.35rem 0; font-size: 0.8rem; color: #a7f3d0;
+        display: flex;
+        gap: 8px;
+        font-size: 0.78rem;
+        color: #374151;
+        padding: 3px 0;
     }
-    .sidebar-about-item strong { color: #ffffff; }
-    .sidebar-badge {
-        display: inline-block; font-size: 0.62rem; font-weight: 700;
-        padding: 2px 10px; border-radius: 20px;
-        background: rgba(52,211,153,0.2); color: #34d399;
-        letter-spacing: 0.03em;
-    }
-    .sidebar-footer {
-        text-align: center; padding: 0.5rem 0; font-size: 0.72rem; color: #6ee7b7;
-    }
-
-    /* ═══ STREAMLIT WIDGET OVERRIDES (Emerald) ═══ */
-    /* Primary buttons */
-    .stButton > button[kind="primary"],
-    .stButton > button[data-testid="baseButton-primary"] {
-        background: linear-gradient(135deg, #065f46, #059669) !important;
-        border: none !important; font-weight: 600;
-        border-radius: 8px !important;
-        justify-content: flex-start !important;
-        box-shadow: 0 2px 8px rgba(6,95,70,0.18) !important;
-        transition: all 0.2s ease;
-    }
-    .stButton > button[kind="primary"] p,
-    .stButton > button[data-testid="baseButton-primary"] p {
-        color: white !important;
-        text-align: left !important;
-        width: 100% !important;
-    }
-    .stButton > button[kind="primary"]:hover,
-    .stButton > button[data-testid="baseButton-primary"]:hover {
-        background: linear-gradient(135deg, #022c22, #047857) !important;
-        box-shadow: 0 4px 12px rgba(6,95,70,0.3) !important;
-    }
-    /* Secondary buttons */
-    .stButton > button[kind="secondary"],
-    .stButton > button[data-testid="baseButton-secondary"] {
-        border: 1.5px solid #059669 !important;
-        font-weight: 600; border-radius: 8px !important;
-        justify-content: flex-start !important;
-        transition: all 0.2s ease;
-    }
-    .stButton > button[kind="secondary"] p,
-    .stButton > button[data-testid="baseButton-secondary"] p {
-        color: #000000 !important;
-        text-align: left !important;
-        width: 100% !important;
-    }
-    .stButton > button[kind="secondary"]:hover,
-    .stButton > button[data-testid="baseButton-secondary"]:hover {
-        background: #d1fae5 !important; border-color: #065f46 !important;
-    }
-    /* Default buttons */
-    .stButton > button {
-        border: 1.5px solid #a7f3d0 !important;
-        font-weight: 500; border-radius: 8px !important;
-        justify-content: flex-start !important;
-        text-align: left !important;
-        transition: all 0.2s ease;
-    }
-    .stButton > button > div {
-        display: flex !important;
-        justify-content: flex-start !important;
-        width: 100% !important;
-        text-align: left !important;
-    }
-    .stButton > button p {
-        color: #000000 !important;
-        text-align: left !important;
-        width: 100% !important;
-        margin: 0 !important;
-    }
-    .stButton > button:hover {
-        background: #d1fae5 !important; border-color: #059669 !important;
-    }
-    /* Download buttons */
-    .stDownloadButton > button {
-        border: 1.5px solid #059669 !important; color: #065f46 !important;
-        font-weight: 600; border-radius: 8px !important;
-    }
-    .stDownloadButton > button:hover {
-        background: #d1fae5 !important;
-    }
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] { gap: 4px; }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 8px 8px 0 0 !important; font-weight: 600;
-        color: #065f46 !important;
-    }
-    .stTabs [aria-selected="true"] {
-        background: #d1fae5 !important; color: #065f46 !important;
-        border-bottom: 3px solid #059669 !important;
-    }
-    /* Metrics */
-    [data-testid="stMetricValue"] { color: #065f46 !important; font-weight: 800; }
-    [data-testid="stMetricLabel"] { color: #047857 !important; }
-    /* Expanders */
-    details[data-testid="stExpander"] summary {
-        color: #065f46 !important; font-weight: 600;
-    }
-    /* Selectbox / multiselect borders */
-    .stSelectbox [data-baseweb="select"] > div,
-    .stMultiSelect [data-baseweb="select"] > div {
-        border-color: #a7f3d0 !important; border-radius: 8px !important;
-    }
-    .stSelectbox [data-baseweb="select"] > div:focus-within,
-    .stMultiSelect [data-baseweb="select"] > div:focus-within {
-        border-color: #059669 !important;
-        box-shadow: 0 0 0 1px #059669 !important;
-    }
-    /* Progress bar */
-    .stProgress > div > div > div { background: #059669 !important; }
-    /* Dividers */
-    hr { border-color: #a7f3d0 !important; }
-    /* File uploader */
-    [data-testid="stFileUploader"] section {
-        border: 2px dashed #6ee7b7 !important; border-radius: 10px !important;
-    }
-    [data-testid="stFileUploader"] section:hover {
-        border-color: #059669 !important; background: #ecfdf5 !important;
-    }
-    /* Toggle */
-    .stToggle label span[data-checked="true"] {
-        background-color: #059669 !important;
-    }
-    /* Text input */
-    .stTextInput input { border-color: #a7f3d0 !important; border-radius: 8px !important; }
-    .stTextInput input:focus { border-color: #059669 !important; box-shadow: 0 0 0 1px #059669 !important; }
-    /* Status widget */
-    [data-testid="stStatusWidget"] { border-left: 4px solid #059669 !important; }
-
-    /* ═══ INFO / SUCCESS / WARNING / ERROR BANNERS ═══ */
-    .stAlert [data-testid="stAlertContentInfo"] {
-        background: #d1fae5 !important; border-left-color: #059669 !important;
-    }
-
-    /* ═══ GENERAL CARDS ═══ */
-    .info-card {
-        background: #fff; border: 1px solid #a7f3d0; border-radius: 12px;
-        padding: 1rem; margin-bottom: 0.5rem; box-shadow: 0 1px 4px rgba(6,95,70,0.06);
-    }
-    .info-card .card-title { font-weight: 700; color: #065f46; margin-bottom: 0.3rem; }
-    .info-card .card-subtitle { font-size: 0.8rem; color: #059669; }
-
-    /* ═══ REPORT DOCUMENT CARDS ═══ */
-    .doc-card {
-        background: #fff; border: 1px solid #a7f3d0; border-radius: 12px;
-        padding: 0; margin-bottom: 0.75rem; overflow: hidden;
-        box-shadow: 0 1px 4px rgba(6,95,70,0.06); transition: all 0.2s;
-    }
-    .doc-card:hover { box-shadow: 0 4px 14px rgba(6,95,70,0.12); border-color: #6ee7b7; }
-    .doc-card-header {
-        display: flex; align-items: center; padding: 0.8rem 1.2rem;
-        gap: 1rem; cursor: pointer;
-    }
-    .doc-card-num {
-        font-weight: 700; font-size: 0.85rem; color: #059669;
-        min-width: 32px; text-align: center;
-    }
-    .doc-card-type {
-        font-size: 0.7rem; font-weight: 600; padding: 3px 10px;
-        border-radius: 20px; text-transform: uppercase; letter-spacing: 0.03em;
-    }
-    .doc-card-company { font-weight: 600; color: #065f46; font-size: 0.95rem; flex: 1; }
-    .doc-card-detail { color: #047857; font-size: 0.85rem; }
-    .doc-card-amount { font-weight: 700; color: #065f46; font-size: 1rem; white-space: nowrap; }
-    .doc-card-match {
-        font-size: 0.72rem; padding: 2px 8px; border-radius: 10px;
-        font-weight: 600; white-space: nowrap;
-    }
-    .doc-field-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 0.6rem; padding: 0.8rem 1.2rem;
-    }
-    .doc-field { padding: 0.4rem 0; }
-    .doc-field-label { font-size: 0.7rem; color: #34d399; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
-    .doc-field-value { font-size: 0.88rem; color: #022c22; font-weight: 500; word-break: break-word; }
-    .doc-status-verified { border-left: 4px solid #059669; }
-    .doc-status-rejected { border-left: 4px solid #EE2D25; opacity: 0.6; }
-    .doc-status-pending { border-left: 4px solid #a7f3d0; }
-    .doc-card-status { font-size: 0.8rem; white-space: nowrap; color: #059669; }
-
-    /* ═══ LINE-ITEM MATCHING PAGE — AP Reconciliation ═══ */
-    .lim-header {
-        background: linear-gradient(135deg, #022c22 0%, #065f46 50%, #059669 100%);
-        padding: 1.6rem 2.2rem; border-radius: 12px; margin-bottom: 1.2rem;
-        display: flex; align-items: center; gap: 1.2rem;
-        border-bottom: 3px solid #34d399;
-        box-shadow: 0 4px 16px rgba(6,95,70,0.18);
-    }
-    .lim-header-icon { font-size: 2.2rem; }
-    .lim-header h2 { color: #fff; margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.01em; }
-    .lim-header p { color: #a7f3d0; margin: 0.2rem 0 0 0; font-size: 0.85rem; }
-
-    /* KPI cards */
-    .lim-kpi-card {
-        background: #fff; border: 1px solid #a7f3d0; border-radius: 12px;
-        padding: 0.9rem 1rem; text-align: center;
-        box-shadow: 0 1px 4px rgba(6,95,70,0.06); position: relative;
-    }
-    .lim-kpi-card .kpi-value { font-size: 1.45rem; font-weight: 800; margin-bottom: 0.1rem; line-height: 1.2; }
-    .lim-kpi-card .kpi-label {
-        font-size: 0.68rem; color: #059669; text-transform: uppercase;
-        letter-spacing: 0.06em; font-weight: 600;
-    }
-    .lim-kpi-card .kpi-tooltip {
-        font-size: 0.65rem; color: #6ee7b7; margin-top: 0.2rem;
-        font-style: italic;
-    }
-    .lim-kpi-card .kpi-border-top { position: absolute; top: 0; left: 10%; right: 10%; height: 3px; border-radius: 0 0 3px 3px; }
-    .lim-kpi-teal .kpi-value { color: #065f46; }
-    .lim-kpi-teal .kpi-border-top { background: #065f46; }
-    .lim-kpi-blue .kpi-value { color: #059669; }
-    .lim-kpi-blue .kpi-border-top { background: #059669; }
-    .lim-kpi-green .kpi-value { color: #047857; }
-    .lim-kpi-green .kpi-border-top { background: #047857; }
-    .lim-kpi-red .kpi-value { color: #EE2D25; }
-    .lim-kpi-red .kpi-border-top { background: #EE2D25; }
-    .lim-kpi-amber .kpi-value { color: #d68000; }
-    .lim-kpi-amber .kpi-border-top { background: #d68000; }
-    .lim-kpi-navy .kpi-value { color: #022c22; }
-    .lim-kpi-navy .kpi-border-top { background: #022c22; }
-
-    .lim-section-title {
-        font-size: 0.95rem; font-weight: 700; color: #065f46;
-        padding: 0.5rem 0 0.25rem 0; display: flex; align-items: center; gap: 0.5rem;
-    }
-
-    /* Tables */
-    .lim-table {
-        width: 100%; border-collapse: separate; border-spacing: 0;
-        font-size: 0.84rem; border-radius: 10px; overflow: hidden;
-        border: 1px solid #6ee7b7;
-    }
-    .lim-table thead th {
-        background: #065f46; color: #fff; padding: 0.55rem 0.8rem;
-        font-weight: 700; font-size: 0.75rem; text-transform: uppercase;
-        letter-spacing: 0.04em; text-align: left;
-    }
-    .lim-table tbody td {
-        padding: 0.5rem 0.8rem; border-bottom: 1px solid #d1fae5;
-        color: #022c22; font-size: 0.84rem;
-    }
-    .lim-table tbody tr:last-child td { border-bottom: none; }
-    .lim-table tbody tr:hover { background: #ecfdf5; }
-    .lim-table .amount-col { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
-    .lim-table .neg-amount { color: #EE2D25; }
-    .lim-table-ledger thead th { background: #047857; }
-    .lim-table-result thead th { background: #022c22; }
-    .lim-table-result tbody td { font-size: 0.83rem; }
-
-    /* Status badges */
-    .lim-badge {
-        display: inline-flex; align-items: center; gap: 0.3rem;
-        padding: 2px 10px; border-radius: 20px; font-weight: 700;
-        font-size: 0.73rem; white-space: nowrap;
-    }
-    .lim-badge-match { background: #d1fae5; color: #047857; }
-    .lim-badge-mismatch { background: #fde8e7; color: #EE2D25; }
-    .lim-badge-missing-ledger { background: #fff3e0; color: #d68000; }
-    .lim-badge-missing-soa { background: #d1fae5; color: #059669; }
-    .lim-badge-investigating { background: #d1fae5; color: #059669; }
-    .lim-badge-resolved { background: #d1fae5; color: #065f46; }
-    .lim-badge-approved { background: #d1fae5; color: #022c22; border: 1px solid #6ee7b7; }
-
-    /* Summary / reconciliation bar */
-    .lim-recon-bar {
-        background: #fff; border: 1px solid #a7f3d0; border-radius: 12px;
-        padding: 1rem 1.5rem; margin-top: 0.8rem;
-        box-shadow: 0 1px 4px rgba(6,95,70,0.06);
-    }
-    .lim-recon-row {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 0.3rem 0; font-size: 0.88rem;
-    }
-    .lim-recon-row .recon-label { color: #047857; font-weight: 500; }
-    .lim-recon-row .recon-value { font-weight: 700; color: #065f46; font-variant-numeric: tabular-nums; }
-    .lim-recon-divider { border-bottom: 1px dashed #6ee7b7; margin: 0.3rem 0; }
-    .lim-progress-track {
-        background: #d1fae5; border-radius: 6px; height: 10px; width: 100%;
-        overflow: hidden; margin-top: 0.4rem;
-    }
-    .lim-progress-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
-
-    /* Variance rows */
-    .lim-variance-row {
-        background: #fff8e6; border-left: 4px solid #d68000;
-        padding: 0.6rem 1rem; border-radius: 0 8px 8px 0;
-        margin-bottom: 0.4rem; font-size: 0.84rem;
-    }
-    /* Filter bar */
-    .lim-filter-bar {
-        background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px;
-        padding: 0.8rem 1.2rem; margin-bottom: 1rem;
-    }
-    /* Drill-down panel */
-    .lim-drill-panel {
-        background: #fff; border: 1px solid #6ee7b7; border-radius: 12px;
-        padding: 1.2rem 1.5rem; margin-top: 0.5rem;
-        box-shadow: 0 2px 8px rgba(6,95,70,0.08);
-    }
-    .lim-drill-field { margin-bottom: 0.5rem; }
-    .lim-drill-field .dl-label {
-        font-size: 0.68rem; color: #059669; text-transform: uppercase;
-        letter-spacing: 0.05em; font-weight: 600; margin-bottom: 1px;
-    }
-    .lim-drill-field .dl-value { font-size: 0.92rem; color: #065f46; font-weight: 600; }
-    .lim-drill-field .dl-value.dl-highlight { color: #EE2D25; background: #fde8e7; padding: 1px 6px; border-radius: 4px; }
-    .lim-drill-field .dl-value.dl-ok { color: #047857; }
-
-    .lim-comment-box {
-        width: 100%; border: 1px solid #6ee7b7; border-radius: 8px;
-        padding: 0.5rem 0.7rem; font-size: 0.84rem; resize: vertical;
-        min-height: 60px; font-family: inherit;
-    }
-    .lim-comment-box:focus { border-color: #059669; outline: none; box-shadow: 0 0 0 2px rgba(5,150,105,0.15); }
-
-    /* ═══ DATAFRAME THEMING ═══ */
-    .stDataFrame { border-radius: 10px !important; overflow: hidden; }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
+
+# Dashboard color/theme constants
+_RC_TEAL = "#0D9488"
+_RC_TEAL_DARK = "#0F766E"
+_RC_PURPLE = "#7C3AED"
+_RC_PURPLE_DARK = "#5B21B6"
+_RC_PINK = "#EC4899"
+_RC_AMBER = "#D97706"
+_RC_GREEN = "#16A34A"
+_RC_RED = "#DC2626"
+_RC_RED_DARK = "#991B1B"
+_RC_TEXT = "#111827"
+_RC_MUTED = "#6B7280"
+_RC_PLOTLY_LAYOUT = {
+    "template": "plotly_white",
+    "paper_bgcolor": "#FFFFFF",
+    "plot_bgcolor": "#FFFFFF",
+    "font": {"color": _RC_TEXT, "size": 12},
+}
+
+
+def _rc_metric_card(label: str, value: str, color: str) -> str:
+    return (
+        f"<div style='background:#fff;border:1px solid #e5e7eb;border-left:4px solid {color};"
+        f"border-radius:10px;padding:0.65rem 0.8rem;min-height:78px;'>"
+        f"<div style='font-size:0.68rem;color:{_RC_MUTED};font-weight:600;text-transform:uppercase;letter-spacing:0.04em;'>"
+        f"{label}</div>"
+        f"<div style='font-size:1.15rem;color:{color};font-weight:800;margin-top:0.18rem;'>{value}</div>"
+        f"</div>"
+    )
+
+
+def _generate_ocr_doc_type_mock() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"Document Type": "invoice", "Avg Pages Uploaded": 2.3, "Avg Fields Extracted": 18.0},
+        {"Document Type": "bank_statement", "Avg Pages Uploaded": 6.1, "Avg Fields Extracted": 26.0},
+        {"Document Type": "hotel", "Avg Pages Uploaded": 1.2, "Avg Fields Extracted": 12.0},
+        {"Document Type": "travel", "Avg Pages Uploaded": 1.8, "Avg Fields Extracted": 14.0},
+        {"Document Type": "utility", "Avg Pages Uploaded": 2.0, "Avg Fields Extracted": 16.0},
+    ])
+
+
+def _generate_ocr_summary_mock() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"Month": "Jan", "Document Type": "Commercial Invoice",    "Documents Processed": 42, "Pages Processed": 98,  "Successful": 41, "Failed": 1},
+        {"Month": "Jan", "Document Type": "Utility Bill",          "Documents Processed": 30, "Pages Processed": 62,  "Successful": 29, "Failed": 1},
+        {"Month": "Jan", "Document Type": "Purchase Order",        "Documents Processed": 28, "Pages Processed": 68,  "Successful": 27, "Failed": 1},
+        {"Month": "Jan", "Document Type": "Microsoft Billing",     "Documents Processed": 20, "Pages Processed": 52,  "Successful": 19, "Failed": 1},
+        {"Month": "Feb", "Document Type": "Commercial Invoice",    "Documents Processed": 48, "Pages Processed": 112, "Successful": 46, "Failed": 2},
+        {"Month": "Feb", "Document Type": "Utility Bill",          "Documents Processed": 34, "Pages Processed": 74,  "Successful": 33, "Failed": 1},
+        {"Month": "Feb", "Document Type": "Purchase Order",        "Documents Processed": 32, "Pages Processed": 76,  "Successful": 31, "Failed": 1},
+        {"Month": "Feb", "Document Type": "Microsoft Billing",     "Documents Processed": 22, "Pages Processed": 50,  "Successful": 21, "Failed": 1},
+        {"Month": "Mar", "Document Type": "Commercial Invoice",    "Documents Processed": 44, "Pages Processed": 104, "Successful": 42, "Failed": 2},
+        {"Month": "Mar", "Document Type": "Utility Bill",          "Documents Processed": 32, "Pages Processed": 70,  "Successful": 31, "Failed": 1},
+        {"Month": "Mar", "Document Type": "Purchase Order",        "Documents Processed": 30, "Pages Processed": 74,  "Successful": 29, "Failed": 1},
+        {"Month": "Mar", "Document Type": "Microsoft Billing",     "Documents Processed": 22, "Pages Processed": 53,  "Successful": 21, "Failed": 1},
+        {"Month": "Apr", "Document Type": "Commercial Invoice",    "Documents Processed": 52, "Pages Processed": 122, "Successful": 50, "Failed": 2},
+        {"Month": "Apr", "Document Type": "Utility Bill",          "Documents Processed": 38, "Pages Processed": 82,  "Successful": 37, "Failed": 1},
+        {"Month": "Apr", "Document Type": "Purchase Order",        "Documents Processed": 35, "Pages Processed": 84,  "Successful": 34, "Failed": 1},
+        {"Month": "Apr", "Document Type": "Microsoft Billing",     "Documents Processed": 24, "Pages Processed": 56,  "Successful": 24, "Failed": 0},
+    ])
+
+
+def _generate_recon_mock_runs() -> pd.DataFrame:
+    return pd.DataFrame([
+        {
+            "Run ID": "RUN-2026-0401",
+            "Run Date": "2026-04-01",
+            "Period From": "2026-03-01",
+            "Period To": "2026-03-31",
+            "Status": "✅ Completed",
+            "Needs Review": False,
+            "Review Reasons": "",
+            "Match Rate (%)": 96.2,
+            "Recon Rows": 184,
+            "Outstanding Orders": 2,
+            "Refund Orders": 1,
+            "Income Not In Balance": 3,
+            "Balance Not In Income": 2,
+            "Income Rows": 180,
+            "Balance Rows": 176,
+            "Sales Rows": 184,
+            "Total Sales (RM)": 284300.0,
+            "Total Payment (RM)": 279120.0,
+            "Total Fees (RM)": 4150.0,
+            "Fees % of Sales": 1.46,
+            "Total Outstanding (RM)": 1030.0,
+            "Duration (s)": 24.8,
+        },
+        {
+            "Run ID": "RUN-2026-0408",
+            "Run Date": "2026-04-08",
+            "Period From": "2026-04-01",
+            "Period To": "2026-04-07",
+            "Status": "⚠️ Needs Review",
+            "Needs Review": True,
+            "Review Reasons": "High variance on 3 orders",
+            "Match Rate (%)": 92.8,
+            "Recon Rows": 191,
+            "Outstanding Orders": 7,
+            "Refund Orders": 4,
+            "Income Not In Balance": 8,
+            "Balance Not In Income": 5,
+            "Income Rows": 188,
+            "Balance Rows": 183,
+            "Sales Rows": 191,
+            "Total Sales (RM)": 301980.0,
+            "Total Payment (RM)": 293700.0,
+            "Total Fees (RM)": 5320.0,
+            "Fees % of Sales": 1.76,
+            "Total Outstanding (RM)": 2960.0,
+            "Duration (s)": 31.4,
+        },
+        {
+            "Run ID": "RUN-2026-0415",
+            "Run Date": "2026-04-15",
+            "Period From": "2026-04-08",
+            "Period To": "2026-04-14",
+            "Status": "✅ Completed",
+            "Needs Review": False,
+            "Review Reasons": "",
+            "Match Rate (%)": 97.1,
+            "Recon Rows": 205,
+            "Outstanding Orders": 1,
+            "Refund Orders": 0,
+            "Income Not In Balance": 2,
+            "Balance Not In Income": 1,
+            "Income Rows": 202,
+            "Balance Rows": 199,
+            "Sales Rows": 205,
+            "Total Sales (RM)": 319450.0,
+            "Total Payment (RM)": 315200.0,
+            "Total Fees (RM)": 4980.0,
+            "Fees % of Sales": 1.56,
+            "Total Outstanding (RM)": 1260.0,
+            "Duration (s)": 22.9,
+        },
+    ])
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1649,6 +1326,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════
+# STATE (must initialise before sidebar so active-button logic is correct)
+# ═══════════════════════════════════════════════════════════════════════════
+if "page" not in st.session_state:
+    st.session_state["page"] = "🏠 Dashboard"
+
+# ═══════════════════════════════════════════════════════════════════════════
 # SIDEBAR
 # ═══════════════════════════════════════════════════════════════════════════
 with st.sidebar:
@@ -1733,11 +1416,6 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-# ═══════════════════════════════════════════════════════════════════════════
-# STATE
-# ═══════════════════════════════════════════════════════════════════════════
-if "page" not in st.session_state:
-    st.session_state["page"] = "🏠 Dashboard"
 page = st.session_state["page"]
 
 for key in ("ocr_result", "extraction_result", "doc_type", "uploaded_images", "processing_stage"):
@@ -2567,6 +2245,21 @@ if page == "📤 Document Processing":
                 with open(extraction_output_path, "w", encoding="utf-8") as f:
                     json.dump(extracted_with_ts, f, ensure_ascii=False, indent=2)
 
+                # ── Register PO in directory if applicable ────────────────
+                if doc_type_result == "srkk_purchase_order":
+                    _po_dir_path = app_dir / "docs" / "database" / "srkk_po_dir.json"
+                    try:
+                        _po_dir = json.loads(_po_dir_path.read_text(encoding="utf-8")) if _po_dir_path.exists() else {"po_files": {}}
+                        if not isinstance(_po_dir.get("po_files"), dict):
+                            _po_dir["po_files"] = {}
+                        _po_dir["po_files"][extraction_output_path.name] = {
+                            "registered_at": _upload_ts,
+                            "source_pdf": upload_path.name,
+                        }
+                        _po_dir_path.write_text(json.dumps(_po_dir, indent=2, ensure_ascii=False), encoding="utf-8")
+                    except Exception as _po_reg_err:
+                        st.warning(f"Could not update PO directory: {_po_reg_err}")
+
                 st.success(
                     f"Saved results to `{ocr_output_path.name}` and `{extraction_output_path.name}`. "
                     "These are now available in OCR Viewer, Extraction Viewer, and Report Format."
@@ -2945,6 +2638,91 @@ elif page == "📋 Report Format":
             cb4.markdown(f"⏳ **{n_pending}** pending")
             st.markdown("---")
 
+            # ── Document card styles ──────────────────────────────────
+            st.markdown("""
+<style>
+.doc-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 4px;
+}
+.doc-card.doc-status-verified { border-left: 4px solid #16a34a; }
+.doc-card.doc-status-rejected  { border-left: 4px solid #dc2626; }
+.doc-card.doc-status-pending   { border-left: 4px solid #d97706; }
+.doc-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+}
+.doc-card-num {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #9ca3af;
+    min-width: 28px;
+    flex-shrink: 0;
+}
+.doc-card-type {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+/* spacer between type badge and the rest of the info */
+.doc-card-sep {
+    width: 20px;
+    flex-shrink: 0;
+}
+.doc-card-company {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1e293b;
+    min-width: 160px;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 16px;
+    flex-shrink: 1;
+}
+.doc-card-detail {
+    font-size: 0.82rem;
+    color: #475569;
+    padding-right: 16px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.doc-card-amount {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0f766e;
+    padding-right: 16px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.doc-card-match {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.doc-card-status {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+</style>
+""", unsafe_allow_html=True)
+
             # ── Document cards ───────────────────────────────────────
             for _, row in filtered.iterrows():
                 row_no = int(row["No"])
@@ -2976,6 +2754,7 @@ elif page == "📋 Report Format":
                     f'<div class="doc-card-header">'
                     f'<span class="doc-card-num">{row_no}</span>'
                     f'<span class="doc-card-type" style="background:{type_bg};color:{accent};">{icon} {doc_type}</span>'
+                    f'<span class="doc-card-sep"></span>'
                     f'<span class="doc-card-company">{company}</span>'
                     f'<span class="doc-card-detail">{inv_no}</span>'
                     f'<span class="doc-card-detail">{inv_date}</span>'
@@ -3308,30 +3087,12 @@ elif page == "🔄 Reconciliation":
             _recon_selected_paths = [_recon_uploads_dir / _recon_selected_name]
             _recon_selected_names = [_recon_selected_name]
 
-            # ── File preview cards ───────────────────────────────────────────
-            st.markdown("#### Selected Documents")
-            _prev_cols = st.columns(len(_recon_selected_paths))
-            for _ci, (_cp, _col) in enumerate(zip(_recon_selected_paths, _prev_cols)):
-                with _col:
-                    # Check if extraction output exists
-                    _ext_candidates = sorted(_recon_extraction_dir.glob(f"{_cp.stem}*.json")) if _recon_extraction_dir.exists() else []
-                    _has_extraction = bool(_ext_candidates)
-                    _status_icon = "✅" if _has_extraction else "⏳"
-                    _status_text = "Extracted" if _has_extraction else "Not yet processed"
-                    st.markdown(
-                        f'<div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;'
-                        f'padding:0.8rem 1rem;margin-bottom:0.5rem;">'
-                        f'<div style="font-weight:700;color:#065f46;font-size:0.9rem;margin-bottom:0.3rem;">'
-                        f'📄 {_cp.name}</div>'
-                        f'<div style="font-size:0.78rem;color:#047857;">{_status_icon} {_status_text}</div>'
-                        f'</div>',
-                        unsafe_allow_html=True,
-                    )
-                    _prev_key = f"recon_prev_{_cp.name}"
-                    if st.button(f"👁 Preview", key=_prev_key, use_container_width=True):
-                        st.session_state[f"recon_show_{_cp.name}"] = not st.session_state.get(f"recon_show_{_cp.name}", False)
-                    if st.session_state.get(f"recon_show_{_cp.name}", False):
-                        display_processing_file_preview(_cp)
+            # ── Primary document preview ─────────────────────────────────────
+            _primary_path = _recon_uploads_dir / _recon_selected_name
+            if st.button("👁 Preview Document", key="recon_primary_preview_btn", use_container_width=True):
+                st.session_state["recon_primary_preview"] = not st.session_state.get("recon_primary_preview", False)
+            if st.session_state.get("recon_primary_preview", False):
+                display_processing_file_preview(_primary_path)
 
             # ── Check all selected files have extraction output ──────────────
             _recon_extractions: list[dict] = []
@@ -3378,14 +3139,16 @@ elif page == "🔄 Reconciliation":
                     key=lambda f: f.stat().st_mtime, reverse=True,
                 )
 
-                _ms_excel_mode = st.radio(
-                    "File source",
-                    ["Upload new file", "Use previously uploaded file"],
-                    horizontal=True,
-                    key="ms_excel_mode",
-                )
-
-                if _ms_excel_mode == "Upload new file":
+                if _existing_excels:
+                    _excel_names = [f.name for f in _existing_excels]
+                    _selected_excel_name = st.selectbox(
+                        "Select file",
+                        options=_excel_names,
+                        key="ms_excel_selector",
+                    )
+                    _ms_excel_path = _ms_excel_dir / _selected_excel_name
+                else:
+                    st.info("No previously uploaded files found. Please upload a file below.")
                     _ms_excel_upload = st.file_uploader(
                         "Upload Microsoft Billing file (.xlsx / .xls / .csv)",
                         type=["xlsx", "xls", "csv"],
@@ -3396,18 +3159,6 @@ elif page == "🔄 Reconciliation":
                         _save_path.write_bytes(_ms_excel_upload.read())
                         _ms_excel_path = _save_path
                         st.success(f"✅ Uploaded: **{_ms_excel_upload.name}**")
-                else:
-                    if _existing_excels:
-                        _excel_names = [f.name for f in _existing_excels]
-                        _selected_excel_name = st.selectbox(
-                            "Select file",
-                            options=_excel_names,
-                            key="ms_excel_selector",
-                        )
-                        _ms_excel_path = _ms_excel_dir / _selected_excel_name
-                        st.caption(f"Selected: `{_ms_excel_path.name}`")
-                    else:
-                        st.info("No previously uploaded files found. Upload one above.")
 
                 if _ms_excel_path and _ms_excel_path.exists():
                     try:
@@ -3422,96 +3173,22 @@ elif page == "🔄 Reconciliation":
 
                 st.session_state["recon_ms_excel_path"] = str(_ms_excel_path) if _ms_excel_path else None
 
-                # ── Purchase Order second upload area ────────────────────────
-                st.markdown("---")
-                st.markdown("#### 📋 Purchase Order Document")
-                st.caption(
-                    "Upload or select the Purchase Order PDF that corresponds to this billing. "
-                    "The PO will be used for the second matching stage."
-                )
-
-                _po_uploads_dir = Path(__file__).resolve().parent / "docs" / "uploads"
-                _existing_pos = sorted(
-                    [p for p in _po_uploads_dir.iterdir()
-                     if p.is_file() and p.suffix.lower() == ".pdf"
-                     and p.name != _recon_selected_name],
-                    key=lambda p: p.stat().st_mtime, reverse=True,
-                )
-                _po_file_names = [p.name for p in _existing_pos]
-
-                _po_upload_mode = st.radio(
-                    "PO file source",
-                    ["Upload new file", "Use previously uploaded file"],
-                    horizontal=True,
-                    key="po_upload_mode",
-                )
-
-                _po_pdf_path: Path | None = None
-                if _po_upload_mode == "Upload new file":
-                    _po_pdf_upload = st.file_uploader(
-                        "Upload Purchase Order PDF",
-                        type=["pdf"],
-                        key="po_pdf_uploader",
-                    )
-                    if _po_pdf_upload is not None:
-                        _po_save_path = _po_uploads_dir / _po_pdf_upload.name
-                        _po_save_path.write_bytes(_po_pdf_upload.read())
-                        _po_pdf_path = _po_save_path
-                        st.success(f"✅ Uploaded PO: **{_po_pdf_upload.name}**")
-                else:
-                    if _po_file_names:
-                        _selected_po_name = st.selectbox(
-                            "Select PO document",
-                            options=_po_file_names,
-                            key="po_pdf_selector",
-                        )
-                        _po_pdf_path = _po_uploads_dir / _selected_po_name
-                        st.caption(f"Selected: `{_po_pdf_path.name}`")
-                    else:
-                        st.info("No other uploaded PDFs found. Upload the PO above.")
-
-                # Resolve PO extraction JSON
-                _po_extraction_dir = Path(__file__).resolve().parent / "output" / "extraction"
-                _po_extraction_data: dict | None = None
-                if _po_pdf_path and _po_pdf_path.exists():
-                    _po_ext_candidates = sorted(_po_extraction_dir.glob(f"{_po_pdf_path.stem}*.json")) if _po_extraction_dir.exists() else []
-                    if _po_ext_candidates:
-                        try:
-                            _po_extraction_data = json.loads(_po_ext_candidates[0].read_text(encoding="utf-8"))
-                            _po_extraction_data["_source_file"] = _po_pdf_path.name
-                            st.success(f"✅ PO extraction found: `{_po_ext_candidates[0].name}`")
-                        except Exception as _pe:
-                            st.warning(f"Could not load PO extraction: {_pe}")
-                    else:
-                        st.warning(
-                            f"No extraction output found for `{_po_pdf_path.name}`. "
-                            "Process this document in **Document Processing** first."
-                        )
-                st.session_state["recon_po_extraction"] = _po_extraction_data
-
-                # ── Match mode selector ──────────────────────────────────────
-                st.markdown("##### Match Mode")
-                _ms_match_mode = st.radio(
-                    "How should the Microsoft Billing document be reconciled?",
-                    ["Match with Excel/CSV only",
-                     "Match with Excel/CSV and Purchase Order (3-way)"],
-                    index=1,
-                    key="ms_match_mode",
-                )
-                st.session_state["recon_ms_match_mode"] = _ms_match_mode
-
             if _has_ms_billing and len(_recon_extractions) >= 1:
+                _recon_out_dir = Path(__file__).resolve().parent / "output" / "reconciliation"
+                _recon_out_dir.mkdir(parents=True, exist_ok=True)
+                _ext_dir = Path(__file__).resolve().parent / "output" / "extraction"
+                _status_file = _recon_out_dir / "po_billing_status.json"
+
                 st.markdown("---")
 
                 if st.button("▶ Run Reconciliation", type="primary", use_container_width=True, key="recon_run_btn"):
                     st.session_state["recon_ms_ready"] = False
                     st.session_state["recon_po_ready"] = False
-                    st.session_state["recon_po_summary_ready"] = False
+                    st.session_state["recon_po_approved"] = False
+                    st.session_state["recon_approve_result"] = None
 
-                    _ms_match_mode = st.session_state.get("recon_ms_match_mode", "Match with Excel/CSV and Purchase Order (3-way)")
                     _ms_excel_path_str = st.session_state.get("recon_ms_excel_path")
                     _ms_excel_file = Path(_ms_excel_path_str) if _ms_excel_path_str else None
-                    _po_ext_data = st.session_state.get("recon_po_extraction")
 
                     # ── Identify MS Billing extraction ───────────────────────
                     _ms_billing_data = next(
@@ -3538,50 +3215,17 @@ elif page == "🔄 Reconciliation":
                             st.warning("Stage 1 skipped: no Excel/CSV file provided.")
 
                     # ── Stage 2: Billing × PO ────────────────────────────────
-                    if (
-                        _ms_match_mode == "Match with Excel/CSV and Purchase Order (3-way)"
-                        and _ms_billing_data
-                        and _ms_result
-                        and _po_ext_data
-                    ):
+                    if _ms_billing_data and _ms_result:
                         try:
-                            from core.reconcile.microsoft_billing_po_reconcile import reconcile_po as _po_reconcile
-                            st.write("  📋 Stage 2 — Billing × PO: matching line items against Purchase Order...")
-                            _po_result = _po_reconcile(_ms_billing_data, _ms_result, _po_ext_data)
+                            from core.reconcile.microsoft_billing_po_reconcile import reconcile_po_all as _po_reconcile_all
+                            st.write("  📋 Stage 2 — Billing × PO: matching unbilled line items across all extracted POs...")
+                            _po_result = _po_reconcile_all(_ms_billing_data, _ms_result, _ext_dir, _status_file)
                             st.session_state["recon_po_result"] = _po_result
                             st.session_state["recon_po_ready"] = True
-                            _po_meta = _po_result["po_match_meta"]
-                            _cust_icon = "✅" if _po_meta["customer_name_match"] else "⚠️"
-                            st.write(
-                                f"  {_cust_icon} Stage 2 done — Customer match: {_po_meta['customer_name_match']}  "
-                                f"Found in Billing: {_po_meta['found_in_billing']}  "
-                                f"Not Found in Billing: {_po_meta['not_found_in_billing']}"
-                            )
+                            _po_list = _po_result.get("po_results", [])
+                            st.write(f"  ✅ Stage 2 done — {_po_result.get('billing_number', '')} | POs processed: {len(_po_list)}")
                         except Exception as _po_err:
                             st.error(f"Stage 2 (Billing × PO) failed: {_po_err}")
-                    elif _ms_match_mode == "Match with Excel/CSV and Purchase Order (3-way)" and not _po_ext_data:
-                        st.warning("Stage 2 skipped: no Purchase Order extraction loaded.")
-
-                    # ── Stage 3: Customer PO Coverage ───────────────────────
-                    if (
-                        _ms_match_mode == "Match with Excel/CSV and Purchase Order (3-way)"
-                        and _ms_result
-                    ):
-                        try:
-                            from core.reconcile.microsoft_billing_po_reconcile import reconcile_po_summary as _po_summary
-                            _ext_dir = Path(__file__).resolve().parent / "output" / "extraction"
-                            st.write("  🗂️ Stage 3 — PO Coverage: building customer summary...")
-                            # Collect all Stage 2 results (current PO + any previously saved)
-                            _all_s2 = []
-                            if st.session_state.get("recon_po_result"):
-                                _all_s2.append(st.session_state["recon_po_result"])
-                            _po_summary_result = _po_summary(_ms_result, _ext_dir, _all_s2)
-                            st.session_state["recon_po_summary_result"] = _po_summary_result
-                            st.session_state["recon_po_summary_ready"] = True
-                            _n_customers = _po_summary_result.get("total_customers", 0)
-                            st.write(f"  ✅ Stage 3 done — {_n_customers} customers processed")
-                        except Exception as _s3_err:
-                            st.error(f"Stage 3 (PO Coverage) failed: {_s3_err}")
 
                 # ── MS Billing × Excel Results ───────────────────────────────
                 if st.session_state.get("recon_ms_ready"):
@@ -3694,294 +3338,267 @@ elif page == "🔄 Reconciliation":
                         unsafe_allow_html=True,
                     )
 
-                    # Download
+                    # Download as Excel
+                    _STATUS_LABELS = {
+                        "green":  "Matched (Exact)",
+                        "flow2":  "Sum Match",
+                        "yellow": "Ambiguous",
+                        "red":    "No Match",
+                    }
+                    _dl_rows = []
+                    for _item in _ms_items:
+                        _product     = _item.get("product", "")
+                        _line_amount = _item.get("line_amount", "")
+                        _status      = _STATUS_LABELS.get(_item.get("status", ""), _item.get("status", ""))
+                        _matches     = _item.get("matches", [])
+                        if _matches:
+                            for _m in _matches:
+                                _dl_rows.append({
+                                    "Product (Billing)": _product,
+                                    "Billing Amount (RM)": _line_amount,
+                                    "Status": _status,
+                                    "CSV Product": _m.get("Product", ""),
+                                    "Customer Name": _m.get("Customer Name", ""),
+                                    "Date": _m.get("Date", ""),
+                                    "CSV Amount (RM)": _m.get("Amount", ""),
+                                    "Charge Type": _m.get("Charge Type", ""),
+                                })
+                        else:
+                            _dl_rows.append({
+                                "Product (Billing)": _product,
+                                "Billing Amount (RM)": _line_amount,
+                                "Status": _status,
+                                "CSV Product": "",
+                                "Customer Name": "",
+                                "Date": "",
+                                "CSV Amount (RM)": "",
+                                "Charge Type": "",
+                            })
+                    _dl_df = pd.DataFrame(_dl_rows)
+                    _xl_buf = io.BytesIO()
+                    with pd.ExcelWriter(_xl_buf, engine="openpyxl") as _writer:
+                        _dl_df.to_excel(_writer, index=False, sheet_name="Reconciliation")
+                        _meta_df = pd.DataFrame([{
+                            "Billing Number": _ms_meta.get("billing_number", ""),
+                            "Period From": (_ms_meta.get("billing_period") or {}).get("from", ""),
+                            "Period To": (_ms_meta.get("billing_period") or {}).get("to", ""),
+                            "Reference File": _ms_meta.get("reference_file", ""),
+                            "Total Line Items": _ms_meta.get("total_line_items", 0),
+                            "Matched (Exact)": _ms_meta.get("green", 0),
+                            "Sum Match": _ms_meta.get("flow2", 0),
+                            "Ambiguous": _ms_meta.get("yellow", 0),
+                            "No Match": _ms_meta.get("red", 0),
+                        }])
+                        _meta_df.to_excel(_writer, index=False, sheet_name="Summary")
+                    _xl_buf.seek(0)
+                    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
                     st.download_button(
-                        "⬇️ Download Reconciliation JSON",
-                        data=json.dumps(_ms_result, indent=2, ensure_ascii=False),
-                        file_name=f"ms_billing_recon_{_ms_meta.get('billing_number','result')}.json",
-                        mime="application/json",
+                        "⬇️ Download Reconciliation Excel",
+                        data=_xl_buf.getvalue(),
+                        file_name=f"ms_billing_recon_{_ms_meta.get('billing_number','result')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     )
                     st.markdown("---")
 
-                # ── PO Match Results ─────────────────────────────────────────
+                # ── PO Match Results (New Stage 2 schema) ───────────────────
                 if st.session_state.get("recon_po_ready"):
                     _po_result = st.session_state.get("recon_po_result", {})
-                    _po_meta   = _po_result.get("po_match_meta", {})
-                    _po_items  = _po_result.get("line_items", [])
+                    _po_results = _po_result.get("po_results", [])
 
                     st.markdown("---")
-                    st.markdown("### Stage 2: Stage 1 Result × Purchase Order Reconciliation")
-
-                    # Customer name match banner
-                    if _po_meta.get("customer_name_match"):
-                        _matched_names = ", ".join(_po_meta.get("matched_customers", []))
-                        st.success(
-                            f"✅ **Customer Match Confirmed** — "
-                            f"PO delivery recipient **{_po_meta.get('delivery_recipient')}** "
-                            f"matched Excel customer(s): **{_matched_names}**"
-                        )
-                    else:
-                        st.warning(
-                            f"⚠️ **Customer Name Mismatch** — "
-                            f"PO delivery recipient **{_po_meta.get('delivery_recipient')}** "
-                            f"did not match any CustomerName in the Excel reconciliation result. "
-                            "Line item matching proceeds regardless."
-                        )
-
-                    # Summary metrics
-                    _poc1, _poc2, _poc3 = st.columns(3)
-                    _poc1.metric("Total PO Items",           _po_meta.get("total_po_items", 0))
-                    _poc2.metric("✅ Found in Billing",      _po_meta.get("found_in_billing", 0))
-                    _poc3.metric("❌ Not Found in Billing",  _po_meta.get("not_found_in_billing", 0))
-
-                    # Status label mapping for tiered matches
-                    _STATUS_LABELS = {
-                        "found_exact":       "✅ Exact Match",
-                        "found_date_amount": "✅ Date+Amount",
-                        "found_name_amount": "✅ Name+Amount",
-                        "found_near":        "🟠 Near (all, ±0.01)",
-                        "found_date_near":   "🟠 Near (date, ±0.01)",
-                        "found_name_near":   "🟠 Near (name, ±0.01)",
-                        "found_in_billing":  "✅ Found",
-                    }
-
-                    # Table 1: PO Items Found in Billing
-                    _found_items = [r for r in _po_items if r["match_status"] != "not_found_in_billing"]
-                    st.markdown(f"#### ✅ PO Item Found in Billing ({len(_found_items)})")
-                    if _found_items:
-                        _df_found = pd.DataFrame([{
-                            "PO Line #":       r["po_line_no"],
-                            "PO Description":  r["po_description"],
-                            "PO Amount":       r["po_amount"],
-                            "Billing Amount":  r.get("billing_amount") or "—",
-                            "Order ID":        r.get("order_ids") or "—",
-                            "Match Type":      _STATUS_LABELS.get(r["match_status"], r["match_status"]),
-                        } for r in _found_items])
-                        st.dataframe(_df_found, use_container_width=True, hide_index=True)
-                    else:
-                        st.info("No PO line items matched the billing records.")
-
-                    # Table 2: PO Items Not Found in Billing
-                    _not_found_items = [r for r in _po_items if r["match_status"] == "not_found_in_billing"]
-                    st.markdown(f"#### ❌ PO Items Not Found in Billing ({len(_not_found_items)})")
-                    if _not_found_items:
-                        _df_nf = pd.DataFrame([{
-                            "PO Line #":      r["po_line_no"],
-                            "PO Description": r["po_description"],
-                            "PO Amount":      r["po_amount"],
-                        } for r in _not_found_items])
-                        st.dataframe(_df_nf, use_container_width=True, hide_index=True)
-                    else:
-                        st.info("All PO line items were found in billing.")
-
+                    st.markdown("### Stage 2: Billing × Purchase Order (All POs)")
                     st.caption(
-                        f"PO #{_po_meta.get('po_number')}  |  "
-                        f"Date: {_po_meta.get('po_date')}  |  "
-                        f"Generated: {_po_meta.get('generated_at')}"
+                        f"Billing #: {_po_result.get('billing_number', '')}  |  "
+                        f"Generated: {_po_result.get('generated_at', '')}"
                     )
 
-                # ── Stage 3: Customer PO Coverage ────────────────────────────
-                if st.session_state.get("recon_po_summary_ready"):
-                    _s3 = st.session_state.get("recon_po_summary_result", {})
-                    _s3_customers = _s3.get("customers", [])
+                    # ── Filters ───────────────────────────────────────────────
+                    _all_customers = sorted({
+                        _po.get("delivery_recipient", "") for _po in _po_results
+                        if _po.get("delivery_recipient", "")
+                    })
+                    _flt_col1, _flt_col2, _flt_col3 = st.columns([3, 3, 2])
+                    with _flt_col1:
+                        _flt_customer = st.selectbox(
+                            "Filter by Customer",
+                            options=["— All —"] + _all_customers,
+                            index=0,
+                            key="po_flt_customer",
+                            help="Select a customer name to display only their POs",
+                        )
+                    with _flt_col2:
+                        _flt_status = st.selectbox(
+                            "Filter by Match Status",
+                            options=["— All —", "✅ Matched", "❌ Not Matched"],
+                            index=0,
+                            key="po_flt_status",
+                        )
+                    with _flt_col3:
+                        st.metric("POs Processed", len(_po_results),
+                                  help="Done POs billed by a different billing number are excluded.")
 
-                    st.markdown("---")
-                    st.markdown("### Stage 3: Customer PO Coverage Summary")
-                    st.caption(
-                        f"Generated: {_s3.get('generated_at')}  |  "
-                        f"Customers: {_s3.get('total_customers', 0)}"
-                    )
-                    st.info(
-                        "⏳ All POs are **Pending Approval**. "
-                        "Items marked ❌ Unmatched may appear in a future billing cycle.",
-                        icon="ℹ️",
-                    )
+                    # ── Apply filters ─────────────────────────────────────────
+                    def _po_has_match(_po_item):
+                        return any(
+                            str(_li.get("match_status", "")).startswith("found_")
+                            for _li in _po_item.get("line_items", [])
+                        )
 
-                    _S3_STATUS_LABELS = {
+                    _filtered_po_results = _po_results
+                    if _flt_customer and _flt_customer != "— All —":
+                        _filtered_po_results = [
+                            _p for _p in _filtered_po_results
+                            if _p.get("delivery_recipient", "") == _flt_customer
+                        ]
+                    if _flt_status == "✅ Matched":
+                        _filtered_po_results = [_p for _p in _filtered_po_results if _po_has_match(_p)]
+                    elif _flt_status == "❌ Not Matched":
+                        _filtered_po_results = [_p for _p in _filtered_po_results if not _po_has_match(_p)]
+
+                    st.caption(f"Showing {len(_filtered_po_results)} of {len(_po_results)} POs")
+
+                    # ── MS label map (reused per expander) ───────────────────
+                    _MS_LABEL = {
+                        "already_billed":       "⬜ Already Billed",
                         "found_exact":          "✅ Exact Match",
                         "found_date_amount":    "✅ Date+Amount",
                         "found_name_amount":    "✅ Name+Amount",
                         "found_near":           "🟠 Near (all, ±0.01)",
                         "found_date_near":      "🟠 Near (date, ±0.01)",
                         "found_name_near":      "🟠 Near (name, ±0.01)",
-                        "found_in_billing":     "✅ Found",
-                        "not_found_in_billing": "❌ Unmatched",
+                        "not_found_in_billing": "❌ Not Found",
                     }
 
-                    # ── Filters ──────────────────────────────────────────────
-                    _s3_fa, _s3_fb, _s3_fc = st.columns(3)
+                    def _safe_f(_v):
+                        try:
+                            return float(str(_v).replace(",", ""))
+                        except Exception:
+                            return 0.0
 
-                    _all_cnames = [c["customer_name"] for c in _s3_customers]
+                    # ── Scrollable container ──────────────────────────────────
+                    _po_scroll = st.container(height=620, border=True)
 
-                    # Select All / Deselect All buttons
-                    _btn_a, _btn_b = _s3_fa.columns(2)
-                    if _btn_a.button("Select All", key="s3_name_sel_all", use_container_width=True):
-                        st.session_state["s3_name_filter"] = _all_cnames
-                    if _btn_b.button("Deselect All", key="s3_name_desel_all", use_container_width=True):
-                        st.session_state["s3_name_filter"] = []
+                    with _po_scroll:
+                        if not _filtered_po_results:
+                            st.info("No POs match the current filters.")
 
-                    _s3_name_filter = _s3_fa.multiselect(
-                        "Filter by Company",
-                        options=_all_cnames,
-                        default=_all_cnames,
-                        key="s3_name_filter",
-                    )
+                        for _po in _filtered_po_results:
+                            _po_billing_tag = ", ".join(_po.get("billing_numbers") or []) or "—"
+                            _li_all = _po.get("line_items", [])
 
-                    _COV_RANGES = {
-                        "0%":         (0,    0),
-                        "1% – 15%":   (1,   15),
-                        "16% – 50%":  (16,  50),
-                        "51% – 99%":  (51,  99),
-                        "100%":       (100, 100),
-                    }
-                    _s3_cov_filter = _s3_fb.multiselect(
-                        "Filter by Coverage Range",
-                        options=list(_COV_RANGES.keys()),
-                        default=list(_COV_RANGES.keys()),
-                        key="s3_cov_filter",
-                    )
-
-                    _s3_unmatched_only = _s3_fc.checkbox(
-                        "Has PO but unmatched items only",
-                        value=False,
-                        key="s3_unmatched_only",
-                        help="Show only customers who have a PO but with one or more line items not found in the billing",
-                    )
-
-                    def _in_cov_range(pct):
-                        for _rl in _s3_cov_filter:
-                            _lo, _hi = _COV_RANGES[_rl]
-                            if _lo <= float(pct) <= _hi:
-                                return True
-                        return False
-
-                    # ── Badge colour map ──────────────────────────────────────
-                    _S3_BADGE_STYLE = {
-                        "✅ All Matched": ("#f0fdf4", "#166534"),
-                        "⚡ Partial":      ("#fff7ed", "#c2410c"),
-                        "❌ None Matched": ("#fde8e7", "#c0392b"),
-                    }
-
-                    # ── Build scrollable HTML card list ──────────────────────
-                    _s3_cards_html = ""
-                    for _cust in _s3_customers:
-                        _cname        = _cust["customer_name"]
-                        _coverage     = _cust["po_coverage_pct"]
-                        _billing_tot  = _cust["billing_total"]
-                        _billing_in   = _cust["billing_in_po"]
-                        _billing_out  = _cust["billing_not_in_po"]
-                        _pos          = _cust.get("pos", [])
-
-                        if _cname not in _s3_name_filter:
-                            continue
-                        if not _in_cov_range(_coverage):
-                            continue
-                        _total_unmatched = sum(p.get("unmatched_count", 0) for p in _pos)
-                        if _s3_unmatched_only and (not _pos or _total_unmatched == 0):
-                            continue
-
-                        _total_items   = sum(p["total_items"]   for p in _pos)
-                        _total_matched = sum(p["matched_count"] for p in _pos)
-                        if _pos and _total_matched == _total_items and _total_items > 0:
-                            _cust_badge = "✅ All Matched"
-                        elif _total_matched > 0:
-                            _cust_badge = "⚡ Partial"
-                        else:
-                            _cust_badge = "❌ None Matched"
-
-                        _mock_note = " 🧪" if any(p.get("_mock") for p in _pos) else ""
-                        _bg, _color = _S3_BADGE_STYLE.get(_cust_badge, ("#f9fafb", "#374151"))
-                        _open_attr  = ""
-
-                        # Per-PO inner HTML
-                        _po_html = ""
-                        for _po in _pos:
-                            _pn         = _po["po_number"]
-                            _pd         = _po["po_date"]
-                            _ptotal     = _po["po_total"]
-                            _t_items    = _po["total_items"]
-                            _m_count    = _po["matched_count"]
-                            _m_po_amt   = _po["matched_po_amount"]
-                            _m_bill_amt = _po["matched_billing_amt"]
-                            _variance   = _po["variance"]
-                            _u_po_amt   = _po["unmatched_po_amount"]
-                            _is_mock    = _po.get("_mock", False)
-                            _line_items = _po.get("line_items", [])
-
-                            _po_mock_tag = " 🧪" if _is_mock else ""
-
-                            if _line_items:
-                                _li_hdr = "<tr>" + "".join(
-                                    f"<th style='padding:3px 8px;border-bottom:1px solid #d1d5db;"
-                                    f"text-align:left;font-size:0.78rem'>{_h}</th>"
-                                    for _h in ["Line #", "Description", "PO Amount", "Billing Amt", "Match"]
-                                ) + "</tr>"
-                                _li_rows = ""
-                                for _r in _line_items:
-                                    _ms = _S3_STATUS_LABELS.get(
-                                        _r.get("match_status", ""), _r.get("match_status", "")
-                                    )
-                                    _li_rows += (
-                                        f"<tr>"
-                                        f"<td style='padding:2px 8px;font-size:0.78rem'>{_r.get('po_line_no','')}</td>"
-                                        f"<td style='padding:2px 8px;font-size:0.78rem'>{_r.get('po_description','')}</td>"
-                                        f"<td style='padding:2px 8px;font-size:0.78rem'>{_r.get('po_amount','')}</td>"
-                                        f"<td style='padding:2px 8px;font-size:0.78rem'>{_r.get('billing_amount','—')}</td>"
-                                        f"<td style='padding:2px 8px;font-size:0.78rem'>{_ms}</td>"
-                                        f"</tr>"
-                                    )
-                                _li_tbl = (
-                                    f"<table style='width:100%;border-collapse:collapse;margin-top:4px'>"
-                                    f"<thead>{_li_hdr}</thead><tbody>{_li_rows}</tbody></table>"
-                                )
-                            else:
-                                _li_tbl = "<p style='color:#6b7280;font-size:0.82rem;margin:4px 0'>No line item detail.</p>"
-
-                            _po_html += (
-                                f"<div style='border:1px solid #d1d5db;border-radius:6px;"
-                                f"padding:10px 12px;margin:8px 0;background:#fff'>"
-                                f"<div style='font-weight:600;font-size:0.88rem;margin-bottom:6px'>"
-                                f"PO {_pn}{_po_mock_tag} &nbsp;|&nbsp; Date: {_pd} &nbsp;|&nbsp; "
-                                f"Total: {_ptotal} &nbsp;|&nbsp; ⏳ Pending Approval</div>"
-                                f"<div style='display:flex;gap:16px;flex-wrap:wrap;font-size:0.82rem;"
-                                f"color:#374151;margin-bottom:6px'>"
-                                f"<span>Items: <b>{_m_count}/{_t_items}</b></span>"
-                                f"<span>Matched PO: <b>{_m_po_amt}</b></span>"
-                                f"<span>Matched Billing: <b>{_m_bill_amt}</b></span>"
-                                f"<span>Variance: <b>{_variance}</b></span>"
-                                f"<span>Unmatched PO: <b>{_u_po_amt}</b></span>"
-                                f"</div>{_li_tbl}</div>"
+                            # Determine if any line items matched this billing
+                            _has_new_matches = any(
+                                str(_li.get("match_status", "")).startswith("found_")
+                                for _li in _li_all
                             )
 
-                        _s3_cards_html += (
-                            f"<details style='background:{_bg};border:1px solid {_color}30;"
-                            f"border-radius:6px;padding:10px 14px;margin-bottom:8px;cursor:pointer;' {_open_attr}>"
-                            f"<summary style='display:flex;justify-content:space-between;"
-                            f"align-items:center;list-style:none;outline:none;'>"
-                            f"<span style='font-weight:600;font-size:0.9rem'>{_cname}{_mock_note}</span>"
-                            f"<span style='display:flex;gap:10px;align-items:center;'>"
-                            f"<span style='font-size:0.85rem;color:#374151'>{_total_matched}/{_total_items} items</span>"
-                            f"<span style='font-size:0.85rem;color:#374151'>Coverage: <b>{_coverage}%</b></span>"
-                            f"<span style='background:{_bg};color:{_color};padding:2px 10px;border-radius:12px;"
-                            f"font-size:0.75rem;font-weight:600;border:1px solid {_color}60'>{_cust_badge}</span>"
-                            f"</span></summary>"
-                            f"<div style='margin-top:8px'>"
-                            f"<div style='display:flex;gap:16px;flex-wrap:wrap;font-size:0.82rem;color:#374151;"
-                            f"margin-bottom:8px;padding:8px;background:#fff;border-radius:4px;border:1px solid #e5e7eb'>"
-                            f"<span>Billing Total: <b>{_billing_tot}</b></span>"
-                            f"<span>In PO(s): <b>{_billing_in}</b></span>"
-                            f"<span>Not in PO: <b>{_billing_out}</b></span>"
-                            f"<span>Coverage: <b>{_coverage}%</b></span>"
-                            f"</div>{_po_html}</div></details>"
-                        )
+                            # Green prefix for matched POs
+                            _exp_label = (
+                                f"🟢 PO {_po.get('po_number', '')} · {_po.get('delivery_recipient', '')} "
+                                f"· {_po.get('current_billed_status', '')} → {_po.get('proposed_billed_status', '')}"
+                                if _has_new_matches else
+                                f"PO {_po.get('po_number', '')} · {_po.get('delivery_recipient', '')} "
+                                f"· {_po.get('current_billed_status', '')} → {_po.get('proposed_billed_status', '')}"
+                            )
+                            with st.expander(_exp_label, expanded=False):
+                                if _has_new_matches:
+                                    st.markdown(
+                                        '<div style="background:#ecfdf5;border-left:4px solid #16a34a;'
+                                        'border-radius:4px;padding:6px 12px;margin-bottom:10px;'
+                                        'font-size:0.82rem;color:#065f46;font-weight:600">'
+                                        '✅ Line items matched to current billing</div>',
+                                        unsafe_allow_html=True,
+                                    )
+                                st.caption(f"Billing No(s) already on this PO: {_po_billing_tag}")
 
-                    if _s3_cards_html:
-                        st.markdown(
-                            f'<div style="max-height:650px;overflow-y:auto;border:1px solid #e5e7eb;'
-                            f'border-radius:8px;padding:12px;background:#fafafa">{_s3_cards_html}</div>',
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.info("No customers match the selected filters.")
+                                # ── Approve / Reject (demo only) ──────────────────
+                                if _has_new_matches:
+                                    st.markdown(
+                                        '<div style="display:flex;gap:8px;margin-bottom:12px">'
+                                        '<button style="background:#16a34a;color:#fff;border:none;border-radius:6px;'
+                                        'padding:8px 22px;font-size:0.875rem;cursor:pointer;font-weight:600">✅ Approve</button>'
+                                        '<button style="background:#dc2626;color:#fff;border:none;border-radius:6px;'
+                                        'padding:8px 22px;font-size:0.875rem;cursor:pointer;font-weight:600">❌ Reject</button>'
+                                        '</div>',
+                                        unsafe_allow_html=True,
+                                    )
 
-                    st.caption(f"Generated: {_s3.get('generated_at')}")
+                                # ── Metrics ───────────────────────────────────────
+                                _total_lines = len(_li_all)
+                                _billed_count = sum(
+                                    1 for _li in _li_all
+                                    if _li.get("match_status") == "already_billed"
+                                    or str(_li.get("match_status", "")).startswith("found_")
+                                )
+                                _po_amt_billed = sum(
+                                    _safe_f(_li.get("po_amount", "0"))
+                                    for _li in _li_all
+                                    if _li.get("match_status") == "already_billed"
+                                    or str(_li.get("match_status", "")).startswith("found_")
+                                )
+                                _billing_amt = 0.0
+                                for _li in _li_all:
+                                    _ms = _li.get("match_status", "")
+                                    if _ms == "already_billed":
+                                        _bd = _li.get("existing_billed_detail") or {}
+                                        _billing_amt += _safe_f(_bd.get("billing_amount", "0"))
+                                    elif _ms.startswith("found_"):
+                                        _bd = _li.get("pending_billed_detail") or {}
+                                        _billing_amt += _safe_f(_bd.get("billing_amount", "0"))
+                                _coverage_pct = (_billed_count / _total_lines * 100) if _total_lines > 0 else 0.0
+                                _variance = _billing_amt - _po_amt_billed
+                                _unmatched_po_amt = sum(
+                                    _safe_f(_li.get("po_amount", "0"))
+                                    for _li in _li_all
+                                    if _li.get("match_status") == "not_found_in_billing"
+                                )
+
+                                _pm1, _pm2, _pm3, _pm4, _pm5 = st.columns(5)
+                                _pm1.metric("Billing Amount", f"{_billing_amt:,.2f}",
+                                            help="Sum of billing amounts for all billed line items on this PO")
+                                _pm2.metric("PO Amount (Billed)", f"{_po_amt_billed:,.2f}",
+                                            help="Sum of PO amounts for billed lines only — unmatched lines excluded")
+                                _pm3.metric("Coverage", f"{_billed_count}/{_total_lines} ({_coverage_pct:.0f}%)",
+                                            help="Proportion of PO line items that have a matching billing entry")
+                                _pm4.metric("Variance", f"{_variance:+,.2f}",
+                                            help="Billing Amount − PO Amount (billed lines). Should be 0 for exact matches.")
+                                _pm5.metric("Unmatched PO", f"{_unmatched_po_amt:,.2f}",
+                                            help="Sum of PO amounts for line items not yet billed — may appear in a future billing cycle")
+
+                                # ── Line items table ──────────────────────────────
+                                _line_df = pd.DataFrame([
+                                    {
+                                        "Line #": _li.get("po_line_no", ""),
+                                        "Description": _li.get("po_description", ""),
+                                        "PO Amount": _li.get("po_amount", ""),
+                                        "Billing Amount": (
+                                            (_li.get("existing_billed_detail") or _li.get("pending_billed_detail") or {}).get("billing_amount", "—")
+                                        ),
+                                        "Match Status": _MS_LABEL.get(
+                                            _li.get("match_status", ""), _li.get("match_status", "")
+                                        ),
+                                        "Billing #": (
+                                            (_li.get("existing_billed_detail") or _li.get("pending_billed_detail") or {}).get("billing_no", "")
+                                        ),
+                                    }
+                                    for _li in _li_all
+                                ])
+
+                                if not _line_df.empty:
+                                    def _style_line_items(_row):
+                                        _lbl = str(_row.get("Match Status", ""))
+                                        if _lbl.startswith("⬜"):
+                                            return ["background-color: #f3f4f6; color: #6b7280"] * len(_row)
+                                        if _lbl.startswith("✅"):
+                                            return ["background-color: #ecfdf5; color: #065f46"] * len(_row)
+                                        if _lbl.startswith("🟠"):
+                                            return ["background-color: #fff7ed; color: #c2410c"] * len(_row)
+                                        return ["background-color: #fef2f2; color: #991b1b"] * len(_row)
+
+                                    st.dataframe(
+                                        _line_df.style.apply(_style_line_items, axis=1),
+                                        use_container_width=True,
+                                        hide_index=True,
+                                    )
+                                else:
+                                    st.info("No line items in this PO.")
