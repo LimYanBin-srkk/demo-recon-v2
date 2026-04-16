@@ -1776,6 +1776,7 @@ if page == "🏠 Dashboard":
     _doc_colors = [
         _RC_TEAL, _RC_PURPLE, _RC_PINK, _RC_AMBER, _RC_GREEN,
         _RC_RED, _RC_PURPLE_DARK, _RC_TEAL_DARK,
+        _RC_TEAL, _RC_PURPLE, _RC_PINK,
     ]
 
     _dt_left, _dt_right = st.columns(2)
