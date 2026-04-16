@@ -47,9 +47,11 @@ Output Schema
 }
 """
 
+import json
 import re
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
+from pathlib import Path
 
 AMOUNT_TOL = Decimal("0.01")
 
@@ -264,4 +266,122 @@ def reconcile_po(billing_data: dict, billing_result: dict, po_data: dict) -> dic
             "not_found_in_billing": not_found_count,
         },
         "line_items": results,
+    }
+
+
+def reconcile_po_summary(billing_result: dict, extraction_dir) -> dict:
+    """
+    Stage 3 — Customer-level PO coverage check.
+
+    For every unique CustomerName found in the Stage 1 billing_result:
+    - Sum their total billing amount from the CSV matches.
+    - Find a matching PO extraction file (by delivery_recipient.name).
+    - Compute variance between billing total and PO total.
+
+    Parameters
+    ----------
+    billing_result  : output of microsoft_billing_reconcile.reconcile()
+    extraction_dir  : Path (or str) to the folder containing *.json extraction files
+
+    Returns
+    -------
+    {
+      "matched":   [{
+        "customer_name":    str,
+        "po_number":        str,
+        "billing_amount":   str,   # sum of all CSV amounts for this customer
+        "po_amount":        str,   # total_incl_tax from PO file
+        "variance":         str,   # billing_amount - po_amount
+        "status":           "Matched" | "Pending Check",
+      }],
+      "unmatched": [{
+        "customer_name":    str,
+        "billing_amount":   str,
+        "status":           "No PO — Pending Check",
+      }],
+      "total_customers":  int,
+      "matched_count":    int,
+      "unmatched_count":  int,
+      "generated_at":     str,
+    }
+    """
+    extraction_dir = Path(extraction_dir)
+
+    # ── Collect unique CustomerNames + sum billing amounts from Stage 1 ───
+    excel_customers: dict[str, str] = {}          # norm_name → original name
+    customer_billing: dict[str, Decimal] = {}     # norm_name → total billing amount
+
+    for item in billing_result.get("line_items", []):
+        for m in item.get("matches", []):
+            cn = (m.get("Customer Name") or "").strip()
+            if not cn:
+                continue
+            norm = _normalise_name(cn)
+            excel_customers[norm] = cn
+            amt = _parse_amount(m.get("Amount") or "0")
+            customer_billing[norm] = customer_billing.get(norm, Decimal("0")) + amt
+
+    # ── Load all PO extraction JSONs ──────────────────────────────────────
+    po_files: list[tuple[str, dict]] = []
+    if extraction_dir.exists():
+        for jf in sorted(extraction_dir.glob("*.json")):
+            try:
+                data = json.loads(jf.read_text(encoding="utf-8"))
+                if data.get("po_number") and data.get("delivery_recipient"):
+                    po_files.append((jf.name, data))
+            except Exception:
+                pass
+
+    # ── Build lookup: norm_recipient → (po_number, po_amount, filename) ──
+    po_lookup: list[tuple[str, str, Decimal, str]] = []
+    for fname, data in po_files:
+        recipient = (data.get("delivery_recipient") or {}).get("name") or ""
+        po_number = data.get("po_number") or ""
+        po_amount = _parse_amount(data.get("total_incl_tax") or "0")
+        if recipient and po_number:
+            po_lookup.append((_normalise_name(recipient), po_number, po_amount, fname))
+
+    # ── Match each customer against PO files ─────────────────────────────
+    matched: list[dict] = []
+    unmatched: list[dict] = []
+
+    for norm_cn, original_cn in sorted(excel_customers.items(), key=lambda x: x[1]):
+        billing_amt = customer_billing.get(norm_cn, Decimal("0"))
+        found = None
+
+        for norm_rec, po_num, po_amt, fname in po_lookup:
+            if norm_rec == norm_cn:
+                found = (po_num, po_amt, fname)
+                break
+        if not found:
+            for norm_rec, po_num, po_amt, fname in po_lookup:
+                if norm_cn in norm_rec or norm_rec in norm_cn:
+                    found = (po_num, po_amt, fname)
+                    break
+
+        if found:
+            po_num, po_amt, fname = found
+            variance = billing_amt - po_amt
+            matched.append({
+                "customer_name":  original_cn,
+                "po_number":      po_num,
+                "billing_amount": str(billing_amt),
+                "po_amount":      str(po_amt),
+                "variance":       str(variance),
+                "status":         "Matched" if abs(variance) <= AMOUNT_TOL else "Pending Check",
+            })
+        else:
+            unmatched.append({
+                "customer_name":  original_cn,
+                "billing_amount": str(billing_amt),
+                "status":         "No PO — Pending Check",
+            })
+
+    return {
+        "matched":           matched,
+        "unmatched":         unmatched,
+        "total_customers":   len(excel_customers),
+        "matched_count":     len(matched),
+        "unmatched_count":   len(unmatched),
+        "generated_at":      datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }

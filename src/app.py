@@ -3499,6 +3499,7 @@ elif page == "🔄 Reconciliation":
                 if st.button("▶ Run Reconciliation", type="primary", use_container_width=True, key="recon_run_btn"):
                     st.session_state["recon_ms_ready"] = False
                     st.session_state["recon_po_ready"] = False
+                    st.session_state["recon_po_summary_ready"] = False
 
                     _ms_match_mode = st.session_state.get("recon_ms_match_mode", "Match with Excel/CSV and Purchase Order (3-way)")
                     _ms_excel_path_str = st.session_state.get("recon_ms_excel_path")
@@ -3553,6 +3554,26 @@ elif page == "🔄 Reconciliation":
                             st.error(f"Stage 2 (Billing × PO) failed: {_po_err}")
                     elif _ms_match_mode == "Match with Excel/CSV and Purchase Order (3-way)" and not _po_ext_data:
                         st.warning("Stage 2 skipped: no Purchase Order extraction loaded.")
+
+                    # ── Stage 3: Customer PO Coverage ───────────────────────
+                    if (
+                        _ms_match_mode == "Match with Excel/CSV and Purchase Order (3-way)"
+                        and _ms_result
+                    ):
+                        try:
+                            from core.reconcile.microsoft_billing_po_reconcile import reconcile_po_summary as _po_summary
+                            _ext_dir = Path(__file__).resolve().parent / "output" / "extraction"
+                            st.write("  🗂️ Stage 3 — PO Coverage: checking which customers have a matching PO...")
+                            _po_summary_result = _po_summary(_ms_result, _ext_dir)
+                            st.session_state["recon_po_summary_result"] = _po_summary_result
+                            st.session_state["recon_po_summary_ready"] = True
+                            st.write(
+                                f"  ✅ Stage 3 done — "
+                                f"Matched: {_po_summary_result['matched_count']}  "
+                                f"Unmatched: {_po_summary_result['unmatched_count']}"
+                            )
+                        except Exception as _s3_err:
+                            st.error(f"Stage 3 (PO Coverage) failed: {_s3_err}")
 
                 # ── MS Billing × Excel Results ───────────────────────────────
                 if st.session_state.get("recon_ms_ready"):
@@ -3738,3 +3759,60 @@ elif page == "🔄 Reconciliation":
                         f"Date: {_po_meta.get('po_date')}  |  "
                         f"Generated: {_po_meta.get('generated_at')}"
                     )
+
+                # ── Stage 3: Customer PO Coverage ────────────────────────────
+                if st.session_state.get("recon_po_summary_ready"):
+                    _s3 = st.session_state.get("recon_po_summary_result", {})
+
+                    st.markdown("---")
+                    st.markdown("### Stage 3: Customer PO Coverage")
+
+                    _s3c1, _s3c2, _s3c3 = st.columns(3)
+                    _s3c1.metric("Total Customers",    _s3.get("total_customers", 0))
+                    _s3c2.metric("✅ PO Matched",      _s3.get("matched_count", 0))
+                    _s3c3.metric("❌ PO Missing",      _s3.get("unmatched_count", 0))
+
+                    # Matched table
+                    _s3_matched = _s3.get("matched", [])
+                    st.markdown(f"#### ✅ Customers with Matching PO ({len(_s3_matched)})")
+                    if _s3_matched:
+                        _df_s3_match = pd.DataFrame([{
+                            "Customer Name":    r["customer_name"],
+                            "PO Number":        r["po_number"],
+                            "Billing Amt":      r["billing_amount"],
+                            "PO Amt":           r["po_amount"],
+                            "Variance":         r["variance"],
+                            "Status":           r["status"],
+                        } for r in _s3_matched], index=range(1, len(_s3_matched) + 1))
+                        st.dataframe(
+                            _df_s3_match,
+                            use_container_width=True,
+                            column_config={
+                                "Billing Amt": st.column_config.NumberColumn("Billing Amt", format="%.2f"),
+                                "PO Amt":      st.column_config.NumberColumn("PO Amt",      format="%.2f"),
+                                "Variance":    st.column_config.NumberColumn("Variance",    format="%.2f"),
+                            },
+                        )
+                    else:
+                        st.info("No customers matched a Purchase Order.")
+
+                    # Unmatched table
+                    _s3_unmatched = _s3.get("unmatched", [])
+                    st.markdown(f"#### ❌ Customers with No PO ({len(_s3_unmatched)})")
+                    if _s3_unmatched:
+                        _df_s3_nm = pd.DataFrame([{
+                            "Customer Name":  r["customer_name"],
+                            "Billing Amt":    r["billing_amount"],
+                            "Status":         r["status"],
+                        } for r in _s3_unmatched], index=range(1, len(_s3_unmatched) + 1))
+                        st.dataframe(
+                            _df_s3_nm,
+                            use_container_width=True,
+                            column_config={
+                                "Billing Amt": st.column_config.NumberColumn("Billing Amt", format="%.2f"),
+                            },
+                        )
+                    else:
+                        st.info("All customers have a matching Purchase Order.")
+
+                    st.caption(f"Generated: {_s3.get('generated_at')}")
