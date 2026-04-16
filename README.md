@@ -130,27 +130,36 @@ Billing line item (product name + amount)
         │
         ▼
 Step 1 — Product Name Match
-        │  Normalise both sides (lowercase, collapse whitespace).
-        │  Try exact match, then partial/contains.
+        │  Normalise both sides: lowercase + collapse whitespace.
+        │  Try exact substring match in either direction first, then
+        │  fall back to distinctive-token matching (long words / SKU codes
+        │  like "e3", "f3") — generic stop-words (microsoft, 365, annual…)
+        │  are excluded to prevent false positives across SKUs.
         │
-        ├─ No CSV row matches the product name → 🔴 No Match
-        │
-        ▼
+        └─ No CSV row matches the product name → 🔴 No Match (stop)
+
 Step 2 — Amount Filter (1-to-1)
-        │  Keep CSV rows where |csv_amount − billing_amount| ≤ 0.01
+        │  Keep name-matched CSV rows where |csv_amount − billing_amount| ≤ 0.01
         │
-        ├─ Exactly 1 row passes → 🟢 Matched (Exact)
+        ├─ Exactly 1 row passes → 🟢 Matched (Exact) (stop)
         │
         └─ 0 or 2+ rows pass → Flow 2
-                │
-                ▼
+
 Step 3 — Flow 2: Per-Customer Sum
-                Group name-matched rows by Customer Name.
-                Sum each customer's amounts.
-                │
-                ├─ Exactly 1 customer's sum matches → 🔵 Sum Match
-                └─ Otherwise → 🟡 Ambiguous
+        │  Group all name-matched CSV rows by Customer Name.
+        │  Sum each customer's amounts for this product.
+        │  Check if |customer_sum − billing_amount| ≤ 0.01
+        │
+        ├─ Exactly 1 customer's sum matches → 🔵 Sum Match (stop)
+        └─ 0 or 2+ customers match → 🟡 Ambiguous
 ```
+
+##### Two-Pass Deduplication
+
+After the initial pass, the engine checks for **contested rows** — CSV rows claimed by more than one billing item:
+
+1. **Pass 1** — determine initial status and claimed CSV row indices per billing item.
+2. **Pass 2** — any CSV row index claimed by 2+ green / Sum Match items causes **all** those claimants to be downgraded to 🟡 Ambiguous.
 
 ##### Result Statuses
 
