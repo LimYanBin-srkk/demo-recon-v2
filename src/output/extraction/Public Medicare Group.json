@@ -1,0 +1,55 @@
+{
+  "document_type": "Purchase Order",
+  "po_number": "S1-712291",
+  "po_date": "06/02/26",
+  "page_info": "Page 1 / 3",
+  "subject": "Azure VM+ RI\nPublic Mediacare Group",
+  "buyer": {
+    "name": "SRKK Consulting Sdn Bhd",
+    "address": "No. 15-1, Level 15, Port Tech Tower,\nJalan Tiara 3/KU01, Bandar Baru Klang,\nKlang, 41150",
+    "company_no": "199901007821",
+    "sst_no": "B16-1808-31021386"
+  },
+  "supplier": {
+    "name": "Microsoft Regional Sales Corporation",
+    "address": ", 119968\nSingapore"
+  },
+  "delivery_recipient": {
+    "name": "PMG HEALTHCARE SDN BHD",
+    "address": "No. 6, Jalan Merdeka\nSarikei, Sarawak 96100\nMalaysia",
+    "contact_person": "Wong Kwong Wang",
+    "contact_phone": "0128840674"
+  },
+  "contact_info": {
+    "tel": "+65 6370 9000",
+    "fax": null,
+    "attn": null,
+    "ref": "S1-712291"
+  },
+  "currency": "USD",
+  "currency_note": "All monetary values are in USD",
+  "line_items": [
+    {
+      "line_no": "1",
+      "order_number": "S1-212511",
+      "part_number": "ROL-AZURE-NN",
+      "description": "MS Azure\nAzure Consumption\n********************\n- Virtual Machines\nStaging Server – 128GB Standard HDD\nMalaysia West\n1 B4ms (4 Cores, 16 GB RAM) (1 Year Reserved),\nWindows (License included), OS Only; 1 managed\ndisk – P10; Internet egress, 5 GB outbound data\ntransfer from Southeast Asia routed via Public\nInternet\n- Virtual Machines\nProduction Server MySQL – 256GB Standard HDD\nMalaysia West\n1 B8ms (8 Cores, 32 GB RAM) (1 Year Reserved),\nWindows (License included), OS Only; 1 managed\ndisk – P15; Internet egress, 5 GB outbound data\ntransfer from Southeast Asia routed via Public\nInternet\n- Storage Accounts\nStaging server MySQL Disk storage\nMalaysia West\nManaged Disks, Premium SSD, LRS Redundancy, P4\nDisk Type 1 Disks; Pay as you go\n- Storage Accounts\nProduction server MySQL Disk storage\nMalaysia West\nManaged Disks, Premium SSD, LRS Redundancy, P6\nDisk Type 1 Disks; (1 Year Reserved)\n- Azure Backup\nStaging Server\nMalaysia West\nAzure VMs, Standard Backup policy, 1 Instance(s) x\n160 GB, LRS Redundancy, Low Average Daily Churn,\n171 GB Average monthly backup data in Standard\nTier, 0 GB Average monthly backup data in Archive\nTier\n- Azure Backup\nProduction Server\nMalaysia West\nAzure VMs, Standard Backup policy, 1 Instance(s) x\n320 GB, LRS Redundancy, Low Average Daily Churn,\n416 GB Average monthly backup data in Standard\nTier, 0 GB Average monthly backup data in Archive\nTier\n- Storage Accounts\nStaging Server blob storage\nMalaysia West\nBlock Blob Storage, General Purpose V2, Hierarchical\nNamespace, LRS Redundancy, Hot Access Tier, 1 GB\nCapacity - pay as you go, 10 x 10,000 Write\noperations, 10 x 10,000 Read operations, 10 x 10,000\nIterative Read operations, 10 x 100 Iterative Write\noperations, 1,000 GB Data Retrieval, 1,000 GB Data\nWrite, SFTP disabled, 1,000 GB Index, 1 x 10,000\nOther operations\n- Storage Accounts\nProduction Server blob storage\nMalaysia West\nBlock Blob Storage, General Purpose V2, Hierarchical\nNamespace, LRS Redundancy, Hot Access Tier, 6 GB\nCapacity - Pay as you go, 10 x 10,000 Write\noperations, 10 x 10,000 Read operations, 10 x 10,000\nIterative Read operations, 10 x 100 Iterative Write\noperations, 1,000 GB Data Retrieval, 1,000 GB Data\nWrite, SFTP disabled, 1,000 GB Index, 1 x 10,000\nOther operations\n- IP Addresses\n1 Static IP Addresses\nMalaysia West\nBasic (Classic), 0 Dynamic IP Addresses X 730 Hours,\n1 Static IP Addresses X 730 Hours\n- VPN Gateway\nSite-to-site tunnel\nMalaysia West\nVPN Gateways, Basic VPN tier, 730 gateway hours,\n10 S2S tunnels, 128 P2S connections, 0 GB, Inter-\nVNET outbound VPN gateway type\n- Virtual Network\nVNET\nMalaysia West\nSoutheast Asia (Virtual Network 1): 100 GB\nOutbound Data Transfer; Southeast Asia (Virtual\nNetwork 2): 100 GB Outbound Data Transfer\n- Bandwidth\nNetwork-out billable\nMalaysia West\nInternet egress, 500 GB outbound data transfer from\nSoutheast Asia routed via Public Internet\n- Microsoft Defender for Cloud\nDefender for Servers Plan 2\nMalaysia West\nMicrosoft Defender for Cloud Workload Protection:\n2 Plan 2 servers x 730 Hours.\n- Load Balancer\nLoad Balancer – Standard Tier\nMalaysia West\nStandard Tier: 5 Rules, 1,000 GB Data Processed",
+      "quantity": "12 MONTH",
+      "unit_price": "442.30",
+      "amount": "5,307.60",
+      "low_confidence": false
+    }
+  ],
+  "total_excl_tax": "5,307.60",
+  "tax_amount": "0.00",
+  "tax_label": null,
+  "total_incl_tax": "5,307.60",
+  "remarks": "For enquiry relating to payment, please contact our Finance personnel:\nPurchase Order Enquiry Tel : +60-3-30021699 Ext 801/805/806\nPurchase Order Enquiry Fax : +60-3-20502670\nPlease advise immediately if the delivery schedule cannot be fulfilled.\nThank you.\n\nThis is computer-generated document therefore no signature is required.",
+  "enquiry_contact": {
+    "tel": "+60-3-30021699 Ext 801/805/806",
+    "fax": "+60-3-20502670"
+  },
+  "additional_fields": {},
+  "associated_billing_type": "SRKK - Microsoft Billing",
+  "_uploaded_at": "2026-04-16 21:55:15"
+}
