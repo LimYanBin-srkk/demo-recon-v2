@@ -1,0 +1,74 @@
+{
+  "_mock": true,
+  "_mock_scenario": "Scenario 2 — Part of line items match billing",
+  "document_type": "Purchase Order",
+  "po_number": "S1-720202",
+  "po_date": "13/02/26",
+  "buyer": {
+    "name": "SRKK Consulting Sdn Bhd",
+    "address": "No. 15-1, Level 15, Port Tech Tower, Jalan Tiara 3/KU01, Bandar Baru Klang, Klang, 41150",
+    "company_no": "199901007821",
+    "sst_no": "B16-1808-31021386"
+  },
+  "supplier": {
+    "name": "Microsoft Regional Sales Corporation",
+    "address": ", 119968\nSingapore"
+  },
+  "delivery_recipient": {
+    "name": "Able Dairies Sdn Bhd",
+    "address": "No. 12, Jalan Industri 3, Taman Perindustrian Puchong, 47100 Puchong, Selangor",
+    "contact_person": "Ahmad Fadzil",
+    "contact_phone": "60-3-8066 1234"
+  },
+  "currency": "USD",
+  "currency_note": "All monetary values are in USD",
+  "line_items": [
+    {
+      "line_no": "1",
+      "order_number": "S1-230001",
+      "part_number": "ROL-M365-NN",
+      "description": "ROL-M365-NN\nMS Office 365\nCFQ7TTC0LH18\nMicrosoft 365 Business Basic\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027",
+      "quantity": "25 UNIT",
+      "unit_price": "28.80",
+      "amount": "720.00",
+      "low_confidence": false
+    },
+    {
+      "line_no": "2",
+      "order_number": "S1-230001",
+      "part_number": "ROL-M365-NN",
+      "description": "ROL-M365-NN\nMS Office 365\nCFQ7TTC0LGHS\nMicrosoft 365 Business Standard\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027",
+      "quantity": "10 UNIT",
+      "unit_price": "48.00",
+      "amount": "480.00",
+      "low_confidence": false
+    },
+    {
+      "line_no": "3",
+      "order_number": "S1-230002",
+      "part_number": "ROL-M365-NN",
+      "description": "ROL-M365-NN\nMS Office 365\nCFQ7TTC0LCHC\nMicrosoft 365 Business Premium\nP1Y - Annual\nContract Dates: 01/04/2026 - 31/03/2027",
+      "quantity": "15 UNIT",
+      "unit_price": "211.20",
+      "amount": "3168.00",
+      "low_confidence": false
+    },
+    {
+      "line_no": "4",
+      "order_number": "S1-230002",
+      "part_number": "ROL-M365-NN",
+      "description": "ROL-M365-NN\nMS Office 365\nCFQ7TTC0L7S8\nMicrosoft Teams Premium\nP1Y - Annual\nContract Dates: 01/04/2026 - 31/03/2027",
+      "quantity": "15 UNIT",
+      "unit_price": "38.40",
+      "amount": "576.00",
+      "low_confidence": false
+    }
+  ],
+  "total_excl_tax": "4944.00",
+  "tax_amount": "0.00",
+  "tax_label": null,
+  "total_incl_tax": "4944.00",
+  "remarks": "Mock PO for demonstration purposes — Scenario 2: Items 3 and 4 use April contract dates (next billing cycle).",
+  "additional_fields": {},
+  "_uploaded_at": "2026-04-16 09:00:00"
+}

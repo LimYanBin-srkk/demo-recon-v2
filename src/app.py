@@ -1265,14 +1265,21 @@ def map_extraction_to_report_row(data: dict, index: int) -> dict:
     if "microsoft" in dt_lower or "billing" in dt_lower:
         # MS Billing data is nested under data["invoice"]
         inv_data     = data.get("invoice", data)
+        currency_code = str(_safe(inv_data, "currency") or currency_code or "").strip().upper()
         invoice_no   = _safe(inv_data, "billing_number") or _safe(inv_data, "invoice_number") or ""
         invoice_date = _safe(inv_data, "document_date") or _safe(inv_data, "billing_date") or _safe(inv_data, "invoice_date") or ""
         company_name = _safe(inv_data, "vendor_name") or _safe(inv_data, "bill_to", "name") or ""
-        total_amt    = _safe(inv_data, "grand_total") or _safe(inv_data, "total_amount") or ""
+        total_amt    = (_safe(inv_data, "billing_summary", "total")
+                        or _safe(inv_data, "grand_total")
+                        or _safe(inv_data, "total_amount")
+                        or "")
     elif "purchase order" in dt_lower or "srkk" in dt_lower and "purchase" in dt_lower:
         invoice_no   = _safe(data, "po_number") or ""
         invoice_date = _safe(data, "po_date") or ""
-        company_name = _safe(data, "supplier", "name") or _safe(data, "buyer", "name") or ""
+        company_name = (_safe(data, "delivery_recipient", "name")
+                        or _safe(data, "supplier", "name")
+                        or _safe(data, "buyer", "name")
+                        or "")
         total_amt    = _safe(data, "total_incl_tax") or _safe(data, "total_amount") or _safe(data, "grand_total") or ""
     elif "vendor" in dt_lower:
         invoice_no   = _safe(data, "invoice_number") or _safe(data, "document_number") or ""
@@ -3434,13 +3441,13 @@ elif page == "🔄 Reconciliation":
 
                 _po_upload_mode = st.radio(
                     "PO file source",
-                    ["Upload new PO PDF", "Select from uploaded documents"],
+                    ["Upload new file", "Use previously uploaded file"],
                     horizontal=True,
                     key="po_upload_mode",
                 )
 
                 _po_pdf_path: Path | None = None
-                if _po_upload_mode == "Upload new PO PDF":
+                if _po_upload_mode == "Upload new file":
                     _po_pdf_upload = st.file_uploader(
                         "Upload Purchase Order PDF",
                         type=["pdf"],
@@ -3563,15 +3570,16 @@ elif page == "🔄 Reconciliation":
                         try:
                             from core.reconcile.microsoft_billing_po_reconcile import reconcile_po_summary as _po_summary
                             _ext_dir = Path(__file__).resolve().parent / "output" / "extraction"
-                            st.write("  🗂️ Stage 3 — PO Coverage: checking which customers have a matching PO...")
-                            _po_summary_result = _po_summary(_ms_result, _ext_dir)
+                            st.write("  🗂️ Stage 3 — PO Coverage: building customer summary...")
+                            # Collect all Stage 2 results (current PO + any previously saved)
+                            _all_s2 = []
+                            if st.session_state.get("recon_po_result"):
+                                _all_s2.append(st.session_state["recon_po_result"])
+                            _po_summary_result = _po_summary(_ms_result, _ext_dir, _all_s2)
                             st.session_state["recon_po_summary_result"] = _po_summary_result
                             st.session_state["recon_po_summary_ready"] = True
-                            st.write(
-                                f"  ✅ Stage 3 done — "
-                                f"Matched: {_po_summary_result['matched_count']}  "
-                                f"Unmatched: {_po_summary_result['unmatched_count']}"
-                            )
+                            _n_customers = _po_summary_result.get("total_customers", 0)
+                            st.write(f"  ✅ Stage 3 done — {_n_customers} customers processed")
                         except Exception as _s3_err:
                             st.error(f"Stage 3 (PO Coverage) failed: {_s3_err}")
 
@@ -3726,8 +3734,19 @@ elif page == "🔄 Reconciliation":
                     _poc2.metric("✅ Found in Billing",      _po_meta.get("found_in_billing", 0))
                     _poc3.metric("❌ Not Found in Billing",  _po_meta.get("not_found_in_billing", 0))
 
+                    # Status label mapping for tiered matches
+                    _STATUS_LABELS = {
+                        "found_exact":       "✅ Exact Match",
+                        "found_date_amount": "✅ Date+Amount",
+                        "found_name_amount": "✅ Name+Amount",
+                        "found_near":        "🟠 Near (all, ±0.01)",
+                        "found_date_near":   "🟠 Near (date, ±0.01)",
+                        "found_name_near":   "🟠 Near (name, ±0.01)",
+                        "found_in_billing":  "✅ Found",
+                    }
+
                     # Table 1: PO Items Found in Billing
-                    _found_items = [r for r in _po_items if r["match_status"] == "found_in_billing"]
+                    _found_items = [r for r in _po_items if r["match_status"] != "not_found_in_billing"]
                     st.markdown(f"#### ✅ PO Item Found in Billing ({len(_found_items)})")
                     if _found_items:
                         _df_found = pd.DataFrame([{
@@ -3736,6 +3755,7 @@ elif page == "🔄 Reconciliation":
                             "PO Amount":       r["po_amount"],
                             "Billing Amount":  r.get("billing_amount") or "—",
                             "Order ID":        r.get("order_ids") or "—",
+                            "Match Type":      _STATUS_LABELS.get(r["match_status"], r["match_status"]),
                         } for r in _found_items])
                         st.dataframe(_df_found, use_container_width=True, hide_index=True)
                     else:
@@ -3763,56 +3783,205 @@ elif page == "🔄 Reconciliation":
                 # ── Stage 3: Customer PO Coverage ────────────────────────────
                 if st.session_state.get("recon_po_summary_ready"):
                     _s3 = st.session_state.get("recon_po_summary_result", {})
+                    _s3_customers = _s3.get("customers", [])
 
                     st.markdown("---")
-                    st.markdown("### Stage 3: Customer PO Coverage")
+                    st.markdown("### Stage 3: Customer PO Coverage Summary")
+                    st.caption(
+                        f"Generated: {_s3.get('generated_at')}  |  "
+                        f"Customers: {_s3.get('total_customers', 0)}"
+                    )
+                    st.info(
+                        "⏳ All POs are **Pending Approval**. "
+                        "Items marked ❌ Unmatched may appear in a future billing cycle.",
+                        icon="ℹ️",
+                    )
 
-                    _s3c1, _s3c2, _s3c3 = st.columns(3)
-                    _s3c1.metric("Total Customers",    _s3.get("total_customers", 0))
-                    _s3c2.metric("✅ PO Matched",      _s3.get("matched_count", 0))
-                    _s3c3.metric("❌ PO Missing",      _s3.get("unmatched_count", 0))
+                    _S3_STATUS_LABELS = {
+                        "found_exact":          "✅ Exact Match",
+                        "found_date_amount":    "✅ Date+Amount",
+                        "found_name_amount":    "✅ Name+Amount",
+                        "found_near":           "🟠 Near (all, ±0.01)",
+                        "found_date_near":      "🟠 Near (date, ±0.01)",
+                        "found_name_near":      "🟠 Near (name, ±0.01)",
+                        "found_in_billing":     "✅ Found",
+                        "not_found_in_billing": "❌ Unmatched",
+                    }
 
-                    # Matched table
-                    _s3_matched = _s3.get("matched", [])
-                    st.markdown(f"#### ✅ Customers with Matching PO ({len(_s3_matched)})")
-                    if _s3_matched:
-                        _df_s3_match = pd.DataFrame([{
-                            "Customer Name":    r["customer_name"],
-                            "PO Number":        r["po_number"],
-                            "Billing Amt":      r["billing_amount"],
-                            "PO Amt":           r["po_amount"],
-                            "Variance":         r["variance"],
-                            "Status":           r["status"],
-                        } for r in _s3_matched], index=range(1, len(_s3_matched) + 1))
-                        st.dataframe(
-                            _df_s3_match,
-                            use_container_width=True,
-                            column_config={
-                                "Billing Amt": st.column_config.NumberColumn("Billing Amt", format="%.2f"),
-                                "PO Amt":      st.column_config.NumberColumn("PO Amt",      format="%.2f"),
-                                "Variance":    st.column_config.NumberColumn("Variance",    format="%.2f"),
-                            },
+                    # ── Filters ──────────────────────────────────────────────
+                    _s3_fa, _s3_fb, _s3_fc = st.columns(3)
+
+                    _all_cnames = [c["customer_name"] for c in _s3_customers]
+
+                    # Select All / Deselect All buttons
+                    _btn_a, _btn_b = _s3_fa.columns(2)
+                    if _btn_a.button("Select All", key="s3_name_sel_all", use_container_width=True):
+                        st.session_state["s3_name_filter"] = _all_cnames
+                    if _btn_b.button("Deselect All", key="s3_name_desel_all", use_container_width=True):
+                        st.session_state["s3_name_filter"] = []
+
+                    _s3_name_filter = _s3_fa.multiselect(
+                        "Filter by Company",
+                        options=_all_cnames,
+                        default=_all_cnames,
+                        key="s3_name_filter",
+                    )
+
+                    _COV_RANGES = {
+                        "0%":         (0,    0),
+                        "1% – 15%":   (1,   15),
+                        "16% – 50%":  (16,  50),
+                        "51% – 99%":  (51,  99),
+                        "100%":       (100, 100),
+                    }
+                    _s3_cov_filter = _s3_fb.multiselect(
+                        "Filter by Coverage Range",
+                        options=list(_COV_RANGES.keys()),
+                        default=list(_COV_RANGES.keys()),
+                        key="s3_cov_filter",
+                    )
+
+                    _s3_unmatched_only = _s3_fc.checkbox(
+                        "Has PO but unmatched items only",
+                        value=False,
+                        key="s3_unmatched_only",
+                        help="Show only customers who have a PO but with one or more line items not found in the billing",
+                    )
+
+                    def _in_cov_range(pct):
+                        for _rl in _s3_cov_filter:
+                            _lo, _hi = _COV_RANGES[_rl]
+                            if _lo <= float(pct) <= _hi:
+                                return True
+                        return False
+
+                    # ── Badge colour map ──────────────────────────────────────
+                    _S3_BADGE_STYLE = {
+                        "✅ All Matched": ("#f0fdf4", "#166534"),
+                        "⚡ Partial":      ("#fff7ed", "#c2410c"),
+                        "❌ None Matched": ("#fde8e7", "#c0392b"),
+                    }
+
+                    # ── Build scrollable HTML card list ──────────────────────
+                    _s3_cards_html = ""
+                    for _cust in _s3_customers:
+                        _cname        = _cust["customer_name"]
+                        _coverage     = _cust["po_coverage_pct"]
+                        _billing_tot  = _cust["billing_total"]
+                        _billing_in   = _cust["billing_in_po"]
+                        _billing_out  = _cust["billing_not_in_po"]
+                        _pos          = _cust.get("pos", [])
+
+                        if _cname not in _s3_name_filter:
+                            continue
+                        if not _in_cov_range(_coverage):
+                            continue
+                        _total_unmatched = sum(p.get("unmatched_count", 0) for p in _pos)
+                        if _s3_unmatched_only and (not _pos or _total_unmatched == 0):
+                            continue
+
+                        _total_items   = sum(p["total_items"]   for p in _pos)
+                        _total_matched = sum(p["matched_count"] for p in _pos)
+                        if _pos and _total_matched == _total_items and _total_items > 0:
+                            _cust_badge = "✅ All Matched"
+                        elif _total_matched > 0:
+                            _cust_badge = "⚡ Partial"
+                        else:
+                            _cust_badge = "❌ None Matched"
+
+                        _mock_note = " 🧪" if any(p.get("_mock") for p in _pos) else ""
+                        _bg, _color = _S3_BADGE_STYLE.get(_cust_badge, ("#f9fafb", "#374151"))
+                        _open_attr  = ""
+
+                        # Per-PO inner HTML
+                        _po_html = ""
+                        for _po in _pos:
+                            _pn         = _po["po_number"]
+                            _pd         = _po["po_date"]
+                            _ptotal     = _po["po_total"]
+                            _t_items    = _po["total_items"]
+                            _m_count    = _po["matched_count"]
+                            _m_po_amt   = _po["matched_po_amount"]
+                            _m_bill_amt = _po["matched_billing_amt"]
+                            _variance   = _po["variance"]
+                            _u_po_amt   = _po["unmatched_po_amount"]
+                            _is_mock    = _po.get("_mock", False)
+                            _line_items = _po.get("line_items", [])
+
+                            _po_mock_tag = " 🧪" if _is_mock else ""
+
+                            if _line_items:
+                                _li_hdr = "<tr>" + "".join(
+                                    f"<th style='padding:3px 8px;border-bottom:1px solid #d1d5db;"
+                                    f"text-align:left;font-size:0.78rem'>{_h}</th>"
+                                    for _h in ["Line #", "Description", "PO Amount", "Billing Amt", "Match"]
+                                ) + "</tr>"
+                                _li_rows = ""
+                                for _r in _line_items:
+                                    _ms = _S3_STATUS_LABELS.get(
+                                        _r.get("match_status", ""), _r.get("match_status", "")
+                                    )
+                                    _li_rows += (
+                                        f"<tr>"
+                                        f"<td style='padding:2px 8px;font-size:0.78rem'>{_r.get('po_line_no','')}</td>"
+                                        f"<td style='padding:2px 8px;font-size:0.78rem'>{_r.get('po_description','')}</td>"
+                                        f"<td style='padding:2px 8px;font-size:0.78rem'>{_r.get('po_amount','')}</td>"
+                                        f"<td style='padding:2px 8px;font-size:0.78rem'>{_r.get('billing_amount','—')}</td>"
+                                        f"<td style='padding:2px 8px;font-size:0.78rem'>{_ms}</td>"
+                                        f"</tr>"
+                                    )
+                                _li_tbl = (
+                                    f"<table style='width:100%;border-collapse:collapse;margin-top:4px'>"
+                                    f"<thead>{_li_hdr}</thead><tbody>{_li_rows}</tbody></table>"
+                                )
+                            else:
+                                _li_tbl = "<p style='color:#6b7280;font-size:0.82rem;margin:4px 0'>No line item detail.</p>"
+
+                            _po_html += (
+                                f"<div style='border:1px solid #d1d5db;border-radius:6px;"
+                                f"padding:10px 12px;margin:8px 0;background:#fff'>"
+                                f"<div style='font-weight:600;font-size:0.88rem;margin-bottom:6px'>"
+                                f"PO {_pn}{_po_mock_tag} &nbsp;|&nbsp; Date: {_pd} &nbsp;|&nbsp; "
+                                f"Total: {_ptotal} &nbsp;|&nbsp; ⏳ Pending Approval</div>"
+                                f"<div style='display:flex;gap:16px;flex-wrap:wrap;font-size:0.82rem;"
+                                f"color:#374151;margin-bottom:6px'>"
+                                f"<span>Items: <b>{_m_count}/{_t_items}</b></span>"
+                                f"<span>Matched PO: <b>{_m_po_amt}</b></span>"
+                                f"<span>Matched Billing: <b>{_m_bill_amt}</b></span>"
+                                f"<span>Variance: <b>{_variance}</b></span>"
+                                f"<span>Unmatched PO: <b>{_u_po_amt}</b></span>"
+                                f"</div>{_li_tbl}</div>"
+                            )
+
+                        _s3_cards_html += (
+                            f"<details style='background:{_bg};border:1px solid {_color}30;"
+                            f"border-radius:6px;padding:10px 14px;margin-bottom:8px;cursor:pointer;' {_open_attr}>"
+                            f"<summary style='display:flex;justify-content:space-between;"
+                            f"align-items:center;list-style:none;outline:none;'>"
+                            f"<span style='font-weight:600;font-size:0.9rem'>{_cname}{_mock_note}</span>"
+                            f"<span style='display:flex;gap:10px;align-items:center;'>"
+                            f"<span style='font-size:0.85rem;color:#374151'>{_total_matched}/{_total_items} items</span>"
+                            f"<span style='font-size:0.85rem;color:#374151'>Coverage: <b>{_coverage}%</b></span>"
+                            f"<span style='background:{_bg};color:{_color};padding:2px 10px;border-radius:12px;"
+                            f"font-size:0.75rem;font-weight:600;border:1px solid {_color}60'>{_cust_badge}</span>"
+                            f"</span></summary>"
+                            f"<div style='margin-top:8px'>"
+                            f"<div style='display:flex;gap:16px;flex-wrap:wrap;font-size:0.82rem;color:#374151;"
+                            f"margin-bottom:8px;padding:8px;background:#fff;border-radius:4px;border:1px solid #e5e7eb'>"
+                            f"<span>Billing Total: <b>{_billing_tot}</b></span>"
+                            f"<span>In PO(s): <b>{_billing_in}</b></span>"
+                            f"<span>Not in PO: <b>{_billing_out}</b></span>"
+                            f"<span>Coverage: <b>{_coverage}%</b></span>"
+                            f"</div>{_po_html}</div></details>"
+                        )
+
+                    if _s3_cards_html:
+                        st.markdown(
+                            f'<div style="max-height:650px;overflow-y:auto;border:1px solid #e5e7eb;'
+                            f'border-radius:8px;padding:12px;background:#fafafa">{_s3_cards_html}</div>',
+                            unsafe_allow_html=True,
                         )
                     else:
-                        st.info("No customers matched a Purchase Order.")
-
-                    # Unmatched table
-                    _s3_unmatched = _s3.get("unmatched", [])
-                    st.markdown(f"#### ❌ Customers with No PO ({len(_s3_unmatched)})")
-                    if _s3_unmatched:
-                        _df_s3_nm = pd.DataFrame([{
-                            "Customer Name":  r["customer_name"],
-                            "Billing Amt":    r["billing_amount"],
-                            "Status":         r["status"],
-                        } for r in _s3_unmatched], index=range(1, len(_s3_unmatched) + 1))
-                        st.dataframe(
-                            _df_s3_nm,
-                            use_container_width=True,
-                            column_config={
-                                "Billing Amt": st.column_config.NumberColumn("Billing Amt", format="%.2f"),
-                            },
-                        )
-                    else:
-                        st.info("All customers have a matching Purchase Order.")
+                        st.info("No customers match the selected filters.")
 
                     st.caption(f"Generated: {_s3.get('generated_at')}")

@@ -201,57 +201,124 @@ def reconcile_po(billing_data: dict, billing_result: dict, po_data: dict) -> dic
                     "charge_end":   m.get("Charge End", ""),
                 })
 
-    # -- Step C: Match each PO line item by contract dates + amount ----------
-    # One-to-one: each CSV row may be consumed by at most one PO line.
+    # -- Step C: Tiered multi-way matching (one-to-one consumption) ---------
+    # Tiers run in order; exact-amount tiers first, then near (±0.01).
+    # Each CSV row may be consumed by at most one PO line.
     po_line_items = po_data.get("line_items") or []
-    results = []
-    found_count = 0
-    not_found_count = 0
     consumed_indices: set[int] = set()
 
+    # Pre-parse all PO items
+    po_parsed: list[dict] = []
     for po_item in po_line_items:
-        po_line_no  = str(po_item.get("line_no") or "")
-        po_desc     = po_item.get("description") or ""
-        po_amount   = _parse_amount(po_item.get("amount") or "0")
-
+        po_desc   = po_item.get("description") or ""
         po_start, po_end = _parse_contract_dates(po_desc)
+        po_parsed.append({
+            "po_line_no":  str(po_item.get("line_no") or ""),
+            "po_desc":     po_desc,
+            "po_amount":   _parse_amount(po_item.get("amount") or "0"),
+            "po_start":    po_start,
+            "po_end":      po_end,
+        })
 
-        matched_row = None
-        if po_start and po_end:
-            for idx, r in enumerate(customer_csv_rows):
-                if (
-                    idx not in consumed_indices
-                    and r.get("charge_start") == po_start
-                    and r.get("charge_end") == po_end
-                    and abs(r["amount"] - po_amount) <= AMOUNT_TOL
-                ):
-                    matched_row = (idx, r)
-                    break
+    # Result slots — None means unmatched so far
+    match_results: list[dict | None] = [None] * len(po_parsed)
 
-        if not matched_row:
-            results.append({
-                "po_line_no":     po_line_no,
-                "po_description": po_desc.replace("\n", " | "),
-                "po_amount":      str(po_amount),
-                "match_status":   "not_found_in_billing",
-            })
-            not_found_count += 1
-            continue
+    def _try_match(po_idx: int, *, need_date: bool, need_name: bool, exact_amount: bool) -> bool:
+        """Attempt to match po_parsed[po_idx] against an unconsumed CSV row."""
+        p = po_parsed[po_idx]
+        for idx, r in enumerate(customer_csv_rows):
+            if idx in consumed_indices:
+                continue
+            # Date check
+            if need_date:
+                if not p["po_start"] or not p["po_end"]:
+                    continue
+                if r.get("charge_start") != p["po_start"] or r.get("charge_end") != p["po_end"]:
+                    continue
+            # Amount check
+            diff = abs(r["amount"] - p["po_amount"])
+            if exact_amount:
+                if diff != Decimal("0"):
+                    continue
+            else:
+                if diff > AMOUNT_TOL or diff == Decimal("0"):
+                    continue  # exact already handled; only 0 < diff ≤ 0.01
+            # Name check
+            if need_name:
+                if not _product_name_match(r["product"], p["po_desc"]):
+                    continue
+            return _assign(po_idx, idx, r, diff)
+        return False
 
-        idx, r = matched_row
-        consumed_indices.add(idx)
+    def _assign(po_idx: int, csv_idx: int, r: dict, diff: Decimal) -> bool:
+        consumed_indices.add(csv_idx)
+        p = po_parsed[po_idx]
 
-        results.append({
-            "po_line_no":      po_line_no,
-            "po_description":  po_desc.replace("\n", " | "),
-            "po_amount":       str(po_amount),
+        # Determine status based on what matched
+        has_date = (p["po_start"] and p["po_end"]
+                    and r.get("charge_start") == p["po_start"]
+                    and r.get("charge_end") == p["po_end"])
+        has_name = _product_name_match(r["product"], p["po_desc"])
+        is_near  = diff > Decimal("0")
+
+        if has_date and has_name and not is_near:
+            status = "found_exact"
+        elif has_date and not is_near:
+            status = "found_date_amount"
+        elif has_name and not is_near:
+            status = "found_name_amount"
+        elif has_date and has_name and is_near:
+            status = "found_near"
+        elif has_date and is_near:
+            status = "found_date_near"
+        else:
+            status = "found_name_near"
+
+        match_results[po_idx] = {
+            "po_line_no":      p["po_line_no"],
+            "po_description":  p["po_desc"].replace("\n", " | "),
+            "po_amount":       str(p["po_amount"]),
             "billing_amount":  str(r["amount"]),
             "order_ids":       r.get("order_id", ""),
             "contract_start":  r.get("charge_start", ""),
             "contract_end":    r.get("charge_end", ""),
-            "match_status":    "found_in_billing",
-        })
-        found_count += 1
+            "match_status":    status,
+        }
+        return True
+
+    # Run tiers in priority order
+    tiers = [
+        # Exact amount tiers
+        {"need_date": True,  "need_name": True,  "exact_amount": True},   # T1
+        {"need_date": True,  "need_name": False, "exact_amount": True},   # T2
+        {"need_date": False, "need_name": True,  "exact_amount": True},   # T3
+        # Near amount tiers (0 < diff ≤ 0.01)
+        {"need_date": True,  "need_name": True,  "exact_amount": False},  # T1n
+        {"need_date": True,  "need_name": False, "exact_amount": False},  # T2n
+        {"need_date": False, "need_name": True,  "exact_amount": False},  # T3n
+    ]
+
+    for tier in tiers:
+        for po_idx in range(len(po_parsed)):
+            if match_results[po_idx] is not None:
+                continue
+            _try_match(po_idx, **tier)
+
+    # Build final results
+    results = []
+    for po_idx, p in enumerate(po_parsed):
+        if match_results[po_idx] is not None:
+            results.append(match_results[po_idx])
+        else:
+            results.append({
+                "po_line_no":     p["po_line_no"],
+                "po_description": p["po_desc"].replace("\n", " | "),
+                "po_amount":      str(p["po_amount"]),
+                "match_status":   "not_found_in_billing",
+            })
+
+    found_count     = sum(1 for r in results if r["match_status"] != "not_found_in_billing")
+    not_found_count = sum(1 for r in results if r["match_status"] == "not_found_in_billing")
 
     return {
         "po_match_meta": {
@@ -269,47 +336,69 @@ def reconcile_po(billing_data: dict, billing_result: dict, po_data: dict) -> dic
     }
 
 
-def reconcile_po_summary(billing_result: dict, extraction_dir) -> dict:
+def reconcile_po_summary(
+    billing_result: dict,
+    extraction_dir,
+    po_line_results: "list[dict] | None" = None,
+) -> dict:
     """
-    Stage 3 — Customer-level PO coverage check.
+    Stage 3 — Customer-level PO coverage summary.
 
-    For every unique CustomerName found in the Stage 1 billing_result:
-    - Sum their total billing amount from the CSV matches.
-    - Find a matching PO extraction file (by delivery_recipient.name).
-    - Compute variance between billing total and PO total.
+    Groups by customer, then by PO.  For each PO shows:
+      - how many line items matched vs. unmatched
+      - matched PO amount vs billing amount and variance
+      - unmatched PO amount (items not in this billing — may appear next month)
+      - billing amount NOT covered by any PO for this customer
 
     Parameters
     ----------
-    billing_result  : output of microsoft_billing_reconcile.reconcile()
-    extraction_dir  : Path (or str) to the folder containing *.json extraction files
+    billing_result   : output of microsoft_billing_reconcile.reconcile()
+    extraction_dir   : Path to folder containing *.json extraction files
+    po_line_results  : list of per-PO Stage 2 result dicts
+                       Each dict must have keys: po_match_meta + line_items
+                       (the output of reconcile_po).  Optional.
 
     Returns
     -------
     {
-      "matched":   [{
-        "customer_name":    str,
-        "po_number":        str,
-        "billing_amount":   str,   # sum of all CSV amounts for this customer
-        "po_amount":        str,   # total_incl_tax from PO file
-        "variance":         str,   # billing_amount - po_amount
-        "status":           "Matched" | "Pending Check",
-      }],
-      "unmatched": [{
-        "customer_name":    str,
-        "billing_amount":   str,
-        "status":           "No PO — Pending Check",
-      }],
-      "total_customers":  int,
-      "matched_count":    int,
-      "unmatched_count":  int,
-      "generated_at":     str,
+      "customers": [
+        {
+          "customer_name":        str,
+          "billing_total":        str,   # sum of ALL Stage 1 CSV rows for this customer
+          "billing_in_po":        str,   # sum of billing_amount from matched PO lines
+          "billing_not_in_po":    str,   # billing_total - billing_in_po
+          "po_coverage_pct":      float, # billing_in_po / billing_total * 100
+          "pos": [
+            {
+              "po_number":            str,
+              "po_date":              str,
+              "po_total":             str,   # total_incl_tax from PO file
+              "total_items":          int,
+              "matched_count":        int,
+              "unmatched_count":      int,
+              "matched_po_amount":    str,   # sum of po_amount for matched lines
+              "matched_billing_amt":  str,   # sum of billing_amount for matched lines
+              "variance":             str,   # matched_billing_amt - matched_po_amount
+              "unmatched_po_amount":  str,   # sum of po_amount for unmatched lines
+              "status":               "⏳ Pending Approval",
+              "line_items":           [...], # same as Stage 2 line_items (may be empty)
+              "_mock":                bool,
+            }
+          ],
+        }
+      ],
+      "total_customers":   int,
+      "generated_at":      str,
     }
     """
     extraction_dir = Path(extraction_dir)
 
-    # ── Collect unique CustomerNames + sum billing amounts from Stage 1 ───
-    excel_customers: dict[str, str] = {}          # norm_name → original name
-    customer_billing: dict[str, Decimal] = {}     # norm_name → total billing amount
+    # ── Collect unique CustomerNames + billing amounts from Stage 1 ───────
+    excel_customers: dict[str, str] = {}       # norm → original
+    customer_billing: dict[str, Decimal] = {}  # norm → total billing amount
+    # Also track which Stage 1 billing rows belong to each customer
+    # so we can compute billing_in_po properly
+    customer_billing_rows: dict[str, list[dict]] = {}  # norm → list of match dicts
 
     for item in billing_result.get("line_items", []):
         for m in item.get("matches", []):
@@ -320,68 +409,110 @@ def reconcile_po_summary(billing_result: dict, extraction_dir) -> dict:
             excel_customers[norm] = cn
             amt = _parse_amount(m.get("Amount") or "0")
             customer_billing[norm] = customer_billing.get(norm, Decimal("0")) + amt
+            customer_billing_rows.setdefault(norm, []).append(m)
 
-    # ── Load all PO extraction JSONs ──────────────────────────────────────
-    po_files: list[tuple[str, dict]] = []
+    # ── Load all PO extraction JSONs, group by delivery_recipient ─────────
+    po_files: list[dict] = []
     if extraction_dir.exists():
         for jf in sorted(extraction_dir.glob("*.json")):
             try:
                 data = json.loads(jf.read_text(encoding="utf-8"))
                 if data.get("po_number") and data.get("delivery_recipient"):
-                    po_files.append((jf.name, data))
+                    po_files.append(data)
             except Exception:
                 pass
 
-    # ── Build lookup: norm_recipient → (po_number, po_amount, filename) ──
-    po_lookup: list[tuple[str, str, Decimal, str]] = []
-    for fname, data in po_files:
-        recipient = (data.get("delivery_recipient") or {}).get("name") or ""
-        po_number = data.get("po_number") or ""
-        po_amount = _parse_amount(data.get("total_incl_tax") or "0")
-        if recipient and po_number:
-            po_lookup.append((_normalise_name(recipient), po_number, po_amount, fname))
+    # Build stage-2-result index: po_number → line_items list
+    s2_by_po: dict[str, list[dict]] = {}
+    if po_line_results:
+        for s2 in po_line_results:
+            meta = s2.get("po_match_meta") or {}
+            pn   = meta.get("po_number") or ""
+            if pn:
+                s2_by_po[pn] = s2.get("line_items", [])
 
-    # ── Match each customer against PO files ─────────────────────────────
-    matched: list[dict] = []
-    unmatched: list[dict] = []
+    # ── Build customer cards ───────────────────────────────────────────────
+    customers_out: list[dict] = []
 
     for norm_cn, original_cn in sorted(excel_customers.items(), key=lambda x: x[1]):
-        billing_amt = customer_billing.get(norm_cn, Decimal("0"))
-        found = None
+        billing_total = customer_billing.get(norm_cn, Decimal("0"))
 
-        for norm_rec, po_num, po_amt, fname in po_lookup:
-            if norm_rec == norm_cn:
-                found = (po_num, po_amt, fname)
-                break
-        if not found:
-            for norm_rec, po_num, po_amt, fname in po_lookup:
-                if norm_cn in norm_rec or norm_rec in norm_cn:
-                    found = (po_num, po_amt, fname)
-                    break
+        # Find all PO files that match this customer
+        matched_pos: list[dict] = []
+        for po_data in po_files:
+            recipient = (po_data.get("delivery_recipient") or {}).get("name") or ""
+            norm_rec  = _normalise_name(recipient)
+            if norm_rec == norm_cn or norm_cn in norm_rec or norm_rec in norm_cn:
+                matched_pos.append(po_data)
 
-        if found:
-            po_num, po_amt, fname = found
-            variance = billing_amt - po_amt
-            matched.append({
-                "customer_name":  original_cn,
-                "po_number":      po_num,
-                "billing_amount": str(billing_amt),
-                "po_amount":      str(po_amt),
-                "variance":       str(variance),
-                "status":         "Matched" if abs(variance) <= AMOUNT_TOL else "Pending Check",
+        billing_in_po = Decimal("0")
+        po_cards: list[dict] = []
+
+        for po_data in matched_pos:
+            po_number  = po_data.get("po_number") or ""
+            po_date    = po_data.get("po_date") or ""
+            po_total   = _parse_amount(po_data.get("total_incl_tax") or "0")
+            is_mock    = bool(po_data.get("_mock"))
+
+            # Get Stage 2 line items for this PO (if available)
+            line_items = s2_by_po.get(po_number, [])
+
+            # Aggregate per PO
+            matched_lines   = [r for r in line_items if r.get("match_status") != "not_found_in_billing"]
+            unmatched_lines = [r for r in line_items if r.get("match_status") == "not_found_in_billing"]
+
+            matched_po_amt   = sum(_parse_amount(r.get("po_amount") or "0")      for r in matched_lines)
+            matched_bill_amt = sum(_parse_amount(r.get("billing_amount") or "0") for r in matched_lines)
+            unmatched_po_amt = sum(_parse_amount(r.get("po_amount") or "0")      for r in unmatched_lines)
+
+            # If no Stage 2 data, treat all PO line items as unmatched
+            if not line_items:
+                raw_lines = po_data.get("line_items") or []
+                unmatched_po_amt = sum(_parse_amount(li.get("amount") or "0") for li in raw_lines)
+                unmatched_lines  = [
+                    {
+                        "po_line_no":     str(li.get("line_no") or ""),
+                        "po_description": (li.get("description") or "").replace("\n", " | "),
+                        "po_amount":      str(_parse_amount(li.get("amount") or "0")),
+                        "match_status":   "not_found_in_billing",
+                    }
+                    for li in raw_lines
+                ]
+                line_items = unmatched_lines
+
+            billing_in_po += matched_bill_amt
+            variance = matched_bill_amt - matched_po_amt
+
+            po_cards.append({
+                "po_number":           po_number,
+                "po_date":             po_date,
+                "po_total":            str(po_total),
+                "total_items":         len(line_items),
+                "matched_count":       len(matched_lines),
+                "unmatched_count":     len(unmatched_lines),
+                "matched_po_amount":   str(matched_po_amt),
+                "matched_billing_amt": str(matched_bill_amt),
+                "variance":            str(variance),
+                "unmatched_po_amount": str(unmatched_po_amt),
+                "status":              "⏳ Pending Approval",
+                "line_items":          line_items,
+                "_mock":               is_mock,
             })
-        else:
-            unmatched.append({
-                "customer_name":  original_cn,
-                "billing_amount": str(billing_amt),
-                "status":         "No PO — Pending Check",
-            })
+
+        billing_not_in_po = billing_total - billing_in_po
+        coverage_pct = float(billing_in_po / billing_total * 100) if billing_total else 0.0
+
+        customers_out.append({
+            "customer_name":     original_cn,
+            "billing_total":     str(billing_total),
+            "billing_in_po":     str(billing_in_po),
+            "billing_not_in_po": str(billing_not_in_po),
+            "po_coverage_pct":   round(coverage_pct, 1),
+            "pos":               po_cards,
+        })
 
     return {
-        "matched":           matched,
-        "unmatched":         unmatched,
-        "total_customers":   len(excel_customers),
-        "matched_count":     len(matched),
-        "unmatched_count":   len(unmatched),
-        "generated_at":      datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "customers":       customers_out,
+        "total_customers": len(customers_out),
+        "generated_at":    datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }

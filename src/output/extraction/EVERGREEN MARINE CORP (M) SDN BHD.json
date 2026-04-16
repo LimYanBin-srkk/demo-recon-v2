@@ -1,0 +1,64 @@
+{
+  "_mock": true,
+  "_mock_scenario": "Scenario 1 — All line items match billing",
+  "document_type": "Purchase Order",
+  "po_number": "S1-720101",
+  "po_date": "13/02/26",
+  "buyer": {
+    "name": "SRKK Consulting Sdn Bhd",
+    "address": "No. 15-1, Level 15, Port Tech Tower, Jalan Tiara 3/KU01, Bandar Baru Klang, Klang, 41150",
+    "company_no": "199901007821",
+    "sst_no": "B16-1808-31021386"
+  },
+  "supplier": {
+    "name": "Microsoft Regional Sales Corporation",
+    "address": ", 119968\nSingapore"
+  },
+  "delivery_recipient": {
+    "name": "EVERGREEN MARINE CORP (M) SDN BHD",
+    "address": "Lot 5, Jalan Pelabuhan 1, Port Klang, 41000 Klang, Selangor",
+    "contact_person": "Lee Chong Wei",
+    "contact_phone": "60-3-3168 8888"
+  },
+  "currency": "USD",
+  "currency_note": "All monetary values are in USD",
+  "line_items": [
+    {
+      "line_no": "1",
+      "order_number": "S1-220001",
+      "part_number": "ROL-M365-RW",
+      "description": "ROL-M365-RW\nMicrosoft 365 Plans Renewal\nCFQ7TTC0LH16\nExchange Online (Plan 1)\nP1M - Monthly\nContract Dates: 28/02/2026 - 27/03/2026",
+      "quantity": "142 UNIT",
+      "unit_price": "3.84",
+      "amount": "545.28",
+      "low_confidence": false
+    },
+    {
+      "line_no": "2",
+      "order_number": "S1-220001",
+      "part_number": "ROL-M365-NN",
+      "description": "ROL-M365-NN\nMS Office 365\nCFQ7TTC0LH18\nMicrosoft 365 Business Basic\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027",
+      "quantity": "50 UNIT",
+      "unit_price": "28.80",
+      "amount": "1440.00",
+      "low_confidence": false
+    },
+    {
+      "line_no": "3",
+      "order_number": "S1-220001",
+      "part_number": "ROL-M365-NN",
+      "description": "ROL-M365-NN\nMS Office 365\nCFQ7TTC0LGHS\nMicrosoft 365 Business Standard\nP1Y - Annual\nContract Dates: 13/02/2026 - 12/02/2027",
+      "quantity": "30 UNIT",
+      "unit_price": "48.00",
+      "amount": "1440.00",
+      "low_confidence": false
+    }
+  ],
+  "total_excl_tax": "3425.28",
+  "tax_amount": "0.00",
+  "tax_label": null,
+  "total_incl_tax": "3425.28",
+  "remarks": "Mock PO for demonstration purposes — Scenario 1: All items match.",
+  "additional_fields": {},
+  "_uploaded_at": "2026-04-16 09:00:00"
+}
